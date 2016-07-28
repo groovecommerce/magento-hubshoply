@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+<!--
+
+/**
+ * HubShop.ly Magento
+ * 
+ * System configuration.
+ * 
+ * @category  Configuration
+ * @package   Groove_Hubshoply
+ * @author    Groove Commerce
+ * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ *
+ * LICENSE
+ * 
+ * The MIT License (MIT)
+ * Copyright (c) 2016 Groove Commerce, LLC.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+-->
+<config>
+    <tabs>
+        <hubshoply translate="title,label" module="groove_hubshoply">
+            <title>HubShop.ly for Magento</title>
+            <label>HubShop.ly for Magento</label>>
+            <sort_order>100</sort_order>
+        </hubshoply>
+    </tabs>
+    <sections>
+        <hs_opt translate="label" module="groove_hubshoply">
+            <label>Configuration</label>
+            <tab>hubshoply</tab>
+            <sort_order>1000</sort_order>
+            <show_in_default>1</show_in_default>
+            <show_in_website>1</show_in_website>
+            <show_in_store>1</show_in_store>
+            <groups>
+                <hs_opt_if translate="label">
+                    <label>HubShop.ly</label>
+                    <sort_order>1</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <expanded>1</expanded>
+                    <fields>
+                        <ifrm translate="label">
+                            <label>HubShop.ly</label>
+                            <frontend_type>text</frontend_type>
+                            <frontend_model>groove_hubshoply/sysframe</frontend_model>
+                            <sort_order>1</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </ifrm>
+                    </fields>
+                </hs_opt_if>
+            </groups>
+        </hs_opt>
+    </sections>
+</config>

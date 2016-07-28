@@ -1,0 +1,5 @@
+app/code/community/Groove/Hubshoply                 app/code/community/Groove/Hubshoply
+app/etc/modules/Groove_Hubshoply.xml                app/etc/modules/
+app/design/adminhtml/default/default/layout/*       app/design/adminhtml/default/default/layout/
+app/design/adminhtml/default/default/template/*     app/design/adminhtml/default/default/template/
+skin/adminhtml/default/default/*                    skin/adminhtml/default/default/
