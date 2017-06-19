@@ -3,17 +3,17 @@
 /**
  * HubShop.ly Magento
  * 
- * Queue controller.
+ * Remote queue interface controller.
  * 
  * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,109 +46,65 @@ class Groove_Hubshoply_QueueController
     extends Mage_Core_Controller_Front_Action
 {
 
-    const QUEUE_CONTROL_LOG = 'hubshoply_queue_controller.log';
+    /**
+     * Validate the OAuth consumer data.
+     * @param Mage_Oauth_Model_Consumer $consumer The consumer model.
+     * 
+     * @return void
+     */
+    private function _validateConsumer(Mage_Oauth_Model_Consumer $consumer)
+    {
+        if (!$consumer->getId()) {
+            throw new Mage_Oauth_Exception(401, 'Unrecognized OAuth client.');
+        }
+
+        $helper = Mage::helper('groove_hubshoply');
+        $secret = $this->getRequest()->getHeader('X-Auth-Secret');
+
+        if ( !$helper->safeCompare($consumer->getSecret(), $secret) ) {
+            throw new Mage_Oauth_Exception(401, 'OAuth secret key rejected.');
+        }
+    }
 
     /**
-     * Queue authenticate action.
-     * 
-     * Requires
-     *  X-Auth-Key:    OAuth Consumer Key
-     *  X-Auth-Secret: Oauth Consumer Secret
-     * 
-     * Returns
-     *  Body: JSON Message including an Access Token with Expiration time
-     *  X-Access-Token:   The access token
-     *  X-Access-Expires: The expiration time of access token
+     * OAuth authentication action.
      *
      * @return void
      */
     public function authenticateAction()
     {
-        //Get HTTP Authentication Headers
-        list($key, $secret) = array(
-            $this->getRequest()->getHeader('X-Auth-Key'),
-            $this->getRequest()->getHeader('X-Auth-Secret'),
-        );
-        //Load possible consumer
-        $consumer = Mage::getModel('oauth/consumer')->load($key,'key');
-        //Test if consumer with key exists
-        //avoid short circuit for constant-time regardless of existence or not
-        $allow = true && $consumer->getId();
-        //Test if secret is valid && the previous result
-        $allow = Mage::helper('groove_hubshoply')
-                    ->safeCompare($consumer->getSecret(), $secret)
-                 && $allow;
-        if($allow)
-        {
-            $token = Mage::getModel('groove_hubshoply/token');
-            try
-            {
-                //generate new token for consumer
-                $token->setConsumerId( $consumer->getId() )
-                      ->setToken( Mage::helper( 'oauth' )->generateToken() )
-                      ->setExpires( $token::DAY )
-                      ->save();
-                //generate JSON response
-                $response = json_encode(array(
-                    'token'   => $token->getToken(),
-                    'expires' => $token->getExpires(),
-                ));
-                //set custom header with token, as well as returning the token response information
-                $this->getResponse()
-                    ->setHeader('X-Access-Token',$token->getToken())
-                    ->setHeader('X-Access-Expires',$token->getExpires())
-                    ->setBody($response)
-                    ->sendResponse();
-                exit;
-            }
-            catch(Exception $x)
-            {
-                $this->_handleException($x);
-            }
-        }
-        else
-        {
-            $this->_errorBody(401, 'Unauthorized', 'Invalid Client or Token provided.');
-        }
-    }
+        try {
+            $consumer = Mage::getModel('oauth/consumer')->load(
+                $this->getRequest()->getHeader('X-Auth-Key'),
+                'key'
+            );
+            
+            $this->_validateConsumer($consumer);
 
-    /**
-     * Index action.
-     * 
-     * Gives details into the routes.
-     * Can/will return the expiration date of current token.
-     *
-     * @return void
-     */
-    public function indexAction()
-    {
-        $param = $this->getRequest()->isSecure()?array('_forced_secure'=>true):null;
-        $token = $this->_checkAuthorization();
-        $data = json_encode(array(
-            'message'=>'Hey, you\'re authorized! This endpoint has no function,'
-                       .' but feel free to utilize the alternate routes.'
-                       .' Access Token required on all routes.',
-            'token_lifetime' => 'Your current token will expire: '.$token->getExpires(),
-            'authenticate' => array(
-                'route' => Mage::getUrl('hubshoply/queue/authenticate',$param),
-                'options' => array(),
-                'required_headers' => array('X-Auth-Client','X-Auth-Key'),
-            ),
-            'view_queue' => array(
-                'route' => Mage::getUrl('hubshoply/queue/view',$param),
-                'options' => array('first' => ':int','last' => ':int','limit' => ':offset,:count','entity' => ':string','type' => ':string','store' => ':int' ),
-                'required_headers' => array('X-Access-Token'),
-                ),
-            'delete_queue' => array(
-                'route' => Mage::getUrl('hubshoply/queue/mark',$param),
-                'options' => array('id'=>':int', 'from'=>':int','to'=>':int'),
-                'required_headers' => array('X-Access-Token'),
-            ),
-        ));
-        $this->getResponse()
-            ->setBody($data)
-            ->sendResponse();
-        exit;
+            $token = Mage::getModel('groove_hubshoply/token')
+                ->setConsumerId($consumer->getId())
+                ->setToken( Mage::helper( 'oauth' )->generateToken() )
+                ->setExpires( $token::DAY )
+                ->save();
+
+            $response = array(
+                'token'   => $token->getToken(),
+                'expires' => $token->getExpires(),
+            );
+
+            $this->getResponse()
+                ->setHeader('X-Access-Token', $token->getToken())
+                ->setHeader('X-Access-Expires', $token->getExpires())
+                ->setHeader('Content-Type', 'application/json')
+                ->setBody(Mage::helper('core')->jsonEncode($response))
+                ->sendResponse();
+        } catch (Mage_Oauth_Exception $error) {
+            $this->_sendError($error->getCode(), 'OAuth Exception', $error->getMessage());
+        } catch (Exception $error) {
+            Mage::helper('groove_hubshoply/debug')->logError($error);
+
+            $this->_sendError(500, 'Server Error', 'Exception thrown while authenticating this request.');
+        }
     }
 
     /**
@@ -161,60 +117,57 @@ class Groove_Hubshoply_QueueController
      * Route: hubshoply/queue/view/store/:store_id
      * Route: hubshoply/queue/view/limit/:offset,:count
      *
-     * Most Routes can be compounded
-     * Ex. hubshoply/queue/view/first/:count/store/:store_id/type/:type
+     * Most routes can be compounded.
+     * FIRST, LAST, and LIMIT are exclusive and cannot be compounded.
+     * 
+     * - Example:
+     *  
+     *  hubshoply/queue/view/first/:count/store/:store_id/type/:type
      *
-     * FIRST, LAST, and LIMIT are exclusive and cannot be compounded
-     *
-     * A customizable view of queue items
+     * A customizable view of queue items.
      *
      * @return void
      */
     public function viewAction()
     {
         $this->_checkAuthorization();
-        $req = $this->getRequest();
-        //get base collection
-        $collection = Mage::getModel('groove_hubshoply/queueitem')
-            ->getCollection();
-        //get FIRST COUNT, LAST COUNT, or LIMIT OFFSET,COUNT items
-        if($x = $req->getParam('first'))
-        {
-            $collection->setOrder('created_at',$collection::SORT_ORDER_ASC);
-            $collection->getSelect()->limit($x);
+
+        $request    = $this->getRequest();
+        $collection = Mage::getResourceModel('groove_hubshoply/queueitem_collection');
+
+        if ($request->getParam('first')) {
+            $collection
+                ->setOrder('created_at', 'ASC')
+                ->setPageSize($request->getParam('first'));
+        } else if ($request->getParam('last')) {
+            $collection
+                ->setOrder('created_at', 'DESC')
+                ->setPageSize($request->getParam('last'));
+        } else if ($limit = $request->getParam('limit')) {
+            $limit = explode(',', $limit);
+            $collection->setOrder('created_at', 'ASC');
+
+            $collection->getSelect()->limit($limit[1], $limit[0]);
         }
-        elseif($x = $req->getParam('last'))
-        {
-            $collection->setOrder('created_at',$collection::SORT_ORDER_DESC);
-            $collection->getSelect()->limit($x);
+
+        if ($request->getParam('type')) {
+            $collection->addFieldToFilter('event_type', $request->getParam('type'));
         }
-        elseif($limit = $req->getParam('limit'))
-        {
-            //SQL-STYLE LIMIT filtering
-            // LIMIT offset,count
-            $limit = explode(',',$limit);
-            $collection->setOrder('created_at',$collection::SORT_ORDER_ASC);
-            $collection->getSelect()->limit($limit[1],$limit[0]);
+
+        if ($request->getParam('entity')) {
+            $collection->addFieldToFilter('event_entity', $request->getParam('entity'));
         }
-        //Filter by TYPE, ENTITY, or STORE
-        if($type = $req->getParam('type') )
-        {
-            $collection->addFieldToFilter('event_type',$type);
+
+        if ($request->getParam('store')) {
+            $collection->addFieldToFilter('store_id', $request->getParam('store'));
         }
-        if($entity = $req->getParam('entity') )
-        {
-            $collection->addFieldToFilter('event_entity',$entity);
-        }
-        if($store = $req->getParam('store') )
-        {
-            $collection->addFieldToFilter('store_id',$store);
-        }
-        //queue abandon cart items on the fly before finally loading the queue item collection
-        //up until now the collection was being defined/built, but not loaded.
+        
         $this->_queueCarts();
-        //return JSON collection
-        $this->getResponse()->setBody($collection->getQueueCollectionJson())->sendResponse();
-        exit;
+
+        $this->getResponse()
+            ->setHeader('Content-Type', 'application/json')
+            ->setBody($collection->getQueueCollectionJson())
+            ->sendResponse();
     }
 
     /**
@@ -312,7 +265,7 @@ class Groove_Hubshoply_QueueController
      *
      * @return void
      */
-    private function _errorBody($code,$message,$details, $callback = null)
+    private function _sendError($code,$message,$details, $callback = null)
     {
         //Response message
         $response = array(

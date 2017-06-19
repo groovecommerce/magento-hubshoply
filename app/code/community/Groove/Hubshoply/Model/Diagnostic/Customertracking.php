@@ -1,19 +1,19 @@
 <?php
 
 /**
- * HubShop.ly Magento
+ * Customer tracking feature enablement diagnostic program.
  * 
- * IFRAME template.
+ * PHP Version 5
  * 
- * @category  Template
+ * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,15 +34,43 @@
  * SOFTWARE.
  */
 
-?>
-<script type="text/javascript">
-    function setHSLoadState() {
+/**
+ * Class declaration
+ *
+ * @category Class_Type_Model
+ * @package  Groove_Hubshoply
+ * @author   Groove Commerce
+ */
 
-        if ( $('hs_opt_hs_opt_if-head') ) {
-            $('hs_opt_hs_opt_if-head').addClassName('ready');
-        }
+class Groove_Hubshoply_Model_Diagnostic_Customertracking
+    implements Groove_Hubshoply_Model_Diagnostic_Interface
+{
 
+    /**
+     * Return dependencies.
+     * 
+     * @return array
+     */
+    public function getDependencies()
+    {
+        return array();
     }
-</script>
-<iframe src="<?php echo $this->getFrameSrc() ?>" id="hubshoply_frame" name="hubshoply_frame"
-        seamless="seamless" onload="setHSLoadState();"></iframe>
+
+    /**
+     * Determine whether the feature is enabled.
+     *
+     * @param Varien_Object $object The item to diagnose.
+     * 
+     * @return void
+     */
+    public function run(Varien_Object $object)
+    {
+        if (Mage::getSingleton('groove_hubshoply/config')->canTrackCustomers(false)) {
+            $object->setStatus(self::STATUS_PASS);
+        } else {
+            $object->setStatus(self::STATUS_WARN)
+                ->setDetails('Customer tracking is not enabled.');
+        }
+    }
+
+}

@@ -1,19 +1,19 @@
 <?php
 
 /**
- * HubShop.ly Magento
+ * OAuth consumer diagnostic program.
  * 
- * Configuration frame fieldset element renderer block.
+ * PHP Version 5
  * 
  * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,29 +37,45 @@
 /**
  * Class declaration
  *
- * @category Class_Type_Block
+ * @category Class_Type_Model
  * @package  Groove_Hubshoply
  * @author   Groove Commerce
  */
 
-class Groove_Hubshoply_Block_Sysframe 
-    extends Mage_Adminhtml_Block_Widget_Form_Renderer_Fieldset_Element
+class Groove_Hubshoply_Model_Diagnostic_Consumer
+    implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
     /**
-     * Render the HubShop.ly connector frame.
+     * Return dependencies.
      * 
-     * @param Varien_Data_Form_Element_Abstract $element The form element.
-     * 
-     * @return string
+     * @return array
      */
-    public function render(Varien_Data_Form_Element_Abstract $element)
+    public function getDependencies()
     {
-        $block = $this->getLayout()
-            ->createBlock('groove_hubshoply/adminhtml_hsframe')
-            ->setTemplate('hubshoply/iframe.phtml');
+        return array(
+            'enabled' => self::STATUS_PASS,
+        );
+    }
 
-        return $block->toHtml();
+    /**
+     * Determine whether the consumer is configured.
+     *
+     * @param Varien_Object $object The item to diagnose.
+     * 
+     * @return void
+     */
+    public function run(Varien_Object $object)
+    {
+        $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(null, false);
+
+        $successful = $consumer->getId() > 0;
+
+        $object->setStatus( $successful ? self::STATUS_PASS : self::STATUS_FAIL );
+
+        if (!$successful) {
+            $object->setDetails('OAuth consumer is not available.');
+        }
     }
 
 }

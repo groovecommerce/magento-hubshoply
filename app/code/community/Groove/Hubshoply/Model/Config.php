@@ -1,0 +1,280 @@
+<?php
+
+/**
+ * HubShop.ly Magento
+ * 
+ * Feature configuration model.
+ * 
+ * @category  Class
+ * @package   Groove_Hubshoply
+ * @author    Groove Commerce
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
+ *
+ * LICENSE
+ * 
+ * The MIT License (MIT)
+ * Copyright (c) 2017 Groove Commerce, LLC.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/**
+ * Class declaration
+ *
+ * @category Class_Type_Model
+ * @package  Groove_Hubshoply
+ * @author   Groove Commerce
+ */
+
+require_once rtrim(Mage::getModuleDir('etc', 'Groove_Hubshoply'), DS) . DS . '..' . DS . 'functions.php';
+
+class Groove_Hubshoply_Model_Config
+    extends Mage_Core_Model_Abstract
+{
+
+    const OAUTH_CONSUMER                    = 'HubShop.ly';
+    const REMOTE_AUTH_URI                   = 'https://magento.hubshop.ly/auth/magento';
+    const ROLE_NAME                         = 'HubShop.ly';
+
+    const XML_CONFIG_PATH_ADMIN_URL         = 'hubshoply/advanced/admin_url';
+    const XML_CONFIG_PATH_DIAGNOSTIC_TESTS  = 'global/hubshoply/diagnostic/tests';
+    const XML_CONFIG_PATH_ENABLED           = 'hubshoply/advanced/enabled';
+    const XML_CONFIG_PATH_SITE_ID           = 'hubshoply/advanced/site_id';
+    const XML_CONFIG_PATH_TRACK_CUSTOMERS   = 'hubshoply/advanced/track_customers';
+    const XML_CONFIG_PATH_USER_CONFIG       = 'hubshoply/advanced/user_config';
+
+    protected $_eventPrefix = 'hubshoply_config';
+    protected $_options     = array();
+
+    /**
+     * Local constructor.
+     * 
+     * @return void
+     */
+    protected function _construct()
+    {
+        $this->_init('groove_hubshoply/config');
+
+        // Autoload data
+        $this->load();
+    }
+
+    /**
+     * Get the configured host name for the requested store.
+     * 
+     * @param integer $storeId The target store ID.
+     * 
+     * @return string
+     */
+    private function _getStoreUrlHost($storeId)
+    {
+        $parts = parse_url(
+            Mage::app()->getStore($storeId)->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB)
+        );
+
+        return (string) $parts['host'];
+    }
+
+    /**
+     * Translate a configuration string.
+     *
+     * Expected format:
+     * 
+     *   foo=bar
+     *   baz={{var qux}}
+     *
+     * Output:
+     *
+     *   array('foo' => 'bar', 'baz' => 'thud')
+     * 
+     * @param string $input The input configuration.
+     * 
+     * @return array
+     */
+    private function _translateConfig($input)
+    {
+        try {
+            $output     = array();
+            $processor  = new Varien_Filter_Template();
+            $values     = array_filter( ( preg_split('/[\r\n]+/', $input) ) );
+
+            $variables  = array(
+                'id'        => $this->getSiteId(),
+                'store'     => Mage::app()->getStore(),
+                'category'  => ( Mage::registry('current_category') ?: new Varien_Object() ),
+                'product'   => ( Mage::registry('current_product') ?: new Varien_Object() ),
+                'order'     => ( Mage::registry('current_order') ?: new Varien_Object() ),
+                'customer'  => Mage::getSingleton('customer/session')->getCustomer(),
+            );
+
+            $processor->setVariables($variables);
+
+            foreach ($values as $row) {
+                $value = explode( '=', ( preg_replace('/\s+=\s+/', '=', $row) ) );
+
+                if ( count($value) === 2 ) {
+                    $output[$value[0]] = $processor->filter($value[1]);
+                }
+            }
+        } catch (Exception $error) {
+            Mage::logException($error);
+
+            $output = array();
+        }
+
+        return $output;
+    }
+
+    /**
+     * Post-load handler.
+     *
+     * - Resets data with real configuration options.
+     * 
+     * @return void
+     */
+    protected function _afterLoad()
+    {
+        if (!empty($this->_data['value'])) {
+            $systemConfig = $this->_translateConfig($this->_data['value']);
+        } else {
+            $systemConfig = array();
+        }
+
+        $this->_data = array();
+
+        $this->addData($systemConfig);
+
+        if ($this->canTrackCustomers(true)) {
+            $this->setData('customerEmail', Mage::getSingleton('customer/session')->getCustomer()->getEmail());
+        }
+
+        return $this;
+    }
+
+    /**
+     * Determine whether customers may be tracked.
+     *
+     * @param boolean $checkLogin Optional flag to consider login status.
+     * @param integer $storeId    Store ID for context.
+     * 
+     * @return boolean
+     */
+    public function canTrackCustomers($checkLogin = false, $storeId = null)
+    {
+        return Mage::getStoreConfigFlag(self::XML_CONFIG_PATH_TRACK_CUSTOMERS, $storeId) &&
+            ( !$checkLogin || Mage::getSingleton('customer/session')->isLoggedIn() );
+    }
+
+    /**
+     * Generate a remote callback-safe admin URL.
+     *
+     * @param string  $route   The target admin route.
+     * @param array   $params  Optional URL parameters.
+     * @param integer $storeId Store ID for context.
+     * 
+     * @return string
+     */
+    public function getAdminUrl($route, array $params = array(), $storeId = null)
+    {
+        $helper     = Mage::helper('adminhtml');
+        $customUrl  = parse_url(Mage::getStoreConfig(self::XML_CONFIG_PATH_ADMIN_URL, $storeId));
+        $urlData    = parse_url($helper->getUrl($route, $params));
+
+        if (!empty($customUrl['path'])) {
+            $customUrl['path'] = rtrim($customUrl['path'], '/');
+
+            if (empty($urlData['path'])) {
+                $urlData['path'] = '';
+            }
+
+            $customUrl['path'] = $customUrl['path'] . str_replace($customUrl['path'], '', $urlData['path']);
+        }
+
+        return http_build_url(
+            array_merge(
+                array_filter($urlData),
+                array_filter($customUrl)
+            )
+        );
+    }
+
+    /**
+     * Return the configured site ID.
+     *
+     * @param boolean $canGenerateFromHost Optional flag to control ID lookup fallback.
+     * @param integer $storeId             Store ID for context.
+     * 
+     * @return string
+     */
+    public function getSiteId($canGenerateFromHost = true, $storeId = null)
+    {
+        $id = (string) Mage::getStoreConfig(self::XML_CONFIG_PATH_SITE_ID, $storeId);
+
+        if ( empty($id) && $canGenerateFromHost ) {
+            $currentHost    = Mage::helper('core/http')->getHttpHost();
+            $storeHost      = $this->_getStoreUrlHost($storeId);
+
+            if ( $currentHost === $storeHost || !$storeId ) {
+                $id = md5($currentHost);
+            } else {
+                $id = md5($storeHost);
+            }
+        }
+
+        return $id;
+    }
+
+    /**
+     * Determine whether the feature is enabled.
+     *
+     * @param integer $storeId Store ID for context.
+     * 
+     * @return boolean
+     */
+    public function isEnabled($storeId = null)
+    {
+        return Mage::getStoreConfigFlag(self::XML_CONFIG_PATH_ENABLED, $storeId);
+    }
+
+    /**
+     * Custom load implementation.
+     * 
+     * @param string $id    The record ID [ignored].
+     * @param string $field The target table column [ignored].
+     * 
+     * @return Groove_Hubshoply_Model_Config
+     */
+    public function load($id = null, $field = null)
+    {
+        parent::load(self::XML_CONFIG_PATH_USER_CONFIG, 'path');
+
+        return $this;
+    }
+
+    /**
+     * Retrieve the diagnostic test configuration.
+     * 
+     * @return Varien_Simplexml_Element
+     */
+    public function getDiagnosticTests()
+    {
+        return Mage::getConfig()->getNode(self::XML_CONFIG_PATH_DIAGNOSTIC_TESTS);
+    }
+
+}

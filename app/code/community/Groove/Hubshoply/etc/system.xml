@@ -9,12 +9,12 @@
  * @category  Configuration
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,41 +38,153 @@
 -->
 <config>
     <tabs>
-        <hubshoply translate="title,label" module="groove_hubshoply">
-            <title>HubShop.ly for Magento</title>
-            <label>HubShop.ly for Magento</label>>
-            <sort_order>100</sort_order>
+        <hubshoply translate="title label" module="groove_hubshoply">
+            <title><![CDATA[HubShop.ly]]></title>
+            <label><![CDATA[HubShop.ly]]></label>>
+            <sort_order>750</sort_order>
         </hubshoply>
     </tabs>
     <sections>
-        <hs_opt translate="label" module="groove_hubshoply">
-            <label>Configuration</label>
+        <hubshoply translate="label" module="groove_hubshoply">
+            <label><![CDATA[Configuration]]></label>
             <tab>hubshoply</tab>
             <sort_order>1000</sort_order>
             <show_in_default>1</show_in_default>
             <show_in_website>1</show_in_website>
             <show_in_store>1</show_in_store>
             <groups>
-                <hs_opt_if translate="label">
+                <setup translate="label">
                     <label>HubShop.ly</label>
-                    <sort_order>1</sort_order>
-                    <show_in_default>1</show_in_default>
-                    <show_in_website>1</show_in_website>
+                    <sort_order>5</sort_order>
+                    <show_in_default>0</show_in_default>
+                    <show_in_website>0</show_in_website>
                     <show_in_store>1</show_in_store>
                     <expanded>1</expanded>
                     <fields>
-                        <ifrm translate="label">
-                            <label>HubShop.ly</label>
+                        <connector translate="label">
+                            <label><![CDATA[HubShop.ly]]></label>
+                            <frontend_type>label</frontend_type>
+                            <frontend_model>groove_hubshoply/adminhtml_system_config_field_connector</frontend_model>
+                            <sort_order>5</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </connector>
+                    </fields>
+                </setup>
+                <advanced translate="label">
+                    <label><![CDATA[Advanced Settings]]></label>
+                    <sort_order>10</sort_order>
+                    <show_in_default>0</show_in_default>
+                    <show_in_website>0</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                        <enabled translate="label">
+                            <label><![CDATA[Enabled]]></label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>5</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </enabled>
+                        <site_id translate="label">
+                            <label><![CDATA[Site ID]]></label>
                             <frontend_type>text</frontend_type>
-                            <frontend_model>groove_hubshoply/sysframe</frontend_model>
-                            <sort_order>1</sort_order>
+                            <sort_order>10</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <enabled>1</enabled>
+                            </depends>
+                        </site_id>
+                        <track_customers translate="label">
+                            <label><![CDATA[Track Customers]]></label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>15</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <enabled>1</enabled>
+                            </depends>
+                        </track_customers>
+                        <admin_url translate="label comment">
+                            <label><![CDATA[Custom Admin URL]]></label>
+                            <comment><![CDATA[Specify if your admin URL has unique constraints like basic authentication.]]></comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>20</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <enabled>1</enabled>
+                            </depends>
+                        </admin_url>
+                        <user_config translate="label comment">
+                            <label><![CDATA[User Configuration]]></label>
+                            <comment><![CDATA[Enter one parameter per line in format <code>name=value</code>. Also supports dynamic values.]]></comment>
+                            <frontend_type>textarea</frontend_type>
+                            <sort_order>25</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <enabled>1</enabled>
+                            </depends>
+                        </user_config>
+                    </fields>
+                </advanced>
+                <support translate="label">
+                    <label>Support</label>
+                    <sort_order>15</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                        <scope_notice translate="label">
+                            <label><![CDATA[
+                                <div class="a-center">Switch to a store view to setup HubShop.ly</div>
+                                <style type="text/css">
+                                    #hubshoply_support {
+                                        display: block !important;
+                                    }
+                                    .switcher {
+                                        border: #ff0000 solid 1px;
+                                        box-shadow: 0 0 8px rgba(0,0,0,0.5);
+                                    }
+                                </style>
+                            ]]></label>
+                            <frontend_type>label</frontend_type>
+                            <frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
+                            <sort_order>5</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </scope_notice>
+                        <diagnostics translate="label">
+                            <label><![CDATA[Diagnostics]]></label>
+                            <frontend_type>label</frontend_type>
+                            <frontend_model>groove_hubshoply/adminhtml_system_config_field_diagnostics</frontend_model>
+                            <sort_order>10</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
-                        </ifrm>
+                        </diagnostics>
+                        <reset translate="label">
+                            <label><![CDATA[Reset State]]></label>
+                            <frontend_type>label</frontend_type>
+                            <frontend_model>groove_hubshoply/adminhtml_system_config_field_reset</frontend_model>
+                            <sort_order>15</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </reset>
                     </fields>
-                </hs_opt_if>
+                </support>
             </groups>
-        </hs_opt>
+        </hubshoply>
     </sections>
 </config>

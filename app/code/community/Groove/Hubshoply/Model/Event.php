@@ -8,12 +8,12 @@
  * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,46 +46,6 @@ class Groove_Hubshoply_Model_Event
 {
 
     const EVENT_CONTROL_LOG = 'hubshoply_event_observer.log';
-    //Host for Hubshoply App where the script embed comes from
-    const SCRIPT_HOST = '//magento.hubshop.ly/shops/';
-
-    /**
-     * Inser the event JavaScript.
-     * 
-     * @param Varien_Event_Observer $observer The event details.
-     * 
-     * @return void
-     */
-    public function insertJavascript(Varien_Event_Observer $observer)
-    {
-        $block = $observer->getBlock();
-        if($block->getType() === 'page/html_head')
-        {
-            //get domain hash
-            $domain_hash = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB);
-            $domain_hash = basename($domain_hash);
-            $domain_hash = md5($domain_hash);
-            //construct the <script> embed
-            $script_tag = sprintf(
-                '<script type="text/javascript" src="%s"></script>',
-                $this::SCRIPT_HOST.$domain_hash.'.js');
-            //construct email capturing script if customer is logged in
-            $email_script = "";
-            if (Mage::getSingleton('customer/session')->isLoggedIn()) {
-                $email = Mage::getSingleton('customer/session')
-                    ->getCustomer()
-                    ->getEmail();
-                $email_script = sprintf('<script type="text/javascript">window.Hubshoply = {}; Hubshoply.customerEmail = "%s";</script>',$email);
-            }
-            // Append new scripts to <head> tag.
-            $transport = $observer->getTransport();
-            $transport->setHtml(
-                $transport->getHtml()
-                .$script_tag
-                .$email_script
-            );
-        }
-    }
 
     /**
      * Adds a registered customer to the queue
@@ -345,6 +305,31 @@ class Groove_Hubshoply_Model_Event
                 ,null,$this::EVENT_CONTROL_LOG
             );
             return false;
+        }
+    }
+
+    /**
+     * Load the current order into the registry for tracking use.
+     *
+     * - Does not support multishipping scenarios.
+     * 
+     * @param Varien_Event_Observer $observer The event details.
+     * 
+     * @return void
+     */
+    public function registerOrderForTracking(Varien_Event_Observer $observer)
+    {
+        try {
+            $order      = Mage::getModel('sales/order');
+            $orderId    = current( ( (array) $observer->getEvent()->getOrderIds() ) );
+
+            $order->load($orderId);
+
+            if ( $order->getId() > 0 && !Mage::registry('current_order') ) {
+                Mage::register('current_order', $order);
+            }
+        } catch (Exception $error) {
+            Mage::logException($error);
         }
     }
     
