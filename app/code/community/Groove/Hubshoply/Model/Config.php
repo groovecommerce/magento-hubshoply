@@ -49,7 +49,8 @@ class Groove_Hubshoply_Model_Config
 {
 
     const OAUTH_CONSUMER                    = 'HubShop.ly';
-    const REMOTE_AUTH_URI                   = 'https://magento.hubshop.ly/auth/magento';
+    const REMOTE_AUTH_URL                   = 'https://magento.hubshop.ly/auth/magento';
+    const REMOTE_TEST_AUTH_URL              = 'https://hubshoply-magento-staging.herokuapp.com/auth/magento';
     const ROLE_NAME                         = 'HubShop.ly';
 
     const XML_CONFIG_PATH_ADMIN_URL         = 'hubshoply/advanced/admin_url';
@@ -57,6 +58,7 @@ class Groove_Hubshoply_Model_Config
     const XML_CONFIG_PATH_ENABLED           = 'hubshoply/advanced/enabled';
     const XML_CONFIG_PATH_FRONTEND_URL      = 'hubshoply/advanced/frontend_url';
     const XML_CONFIG_PATH_SITE_ID           = 'hubshoply/advanced/site_id';
+    const XML_CONFIG_PATH_TEST_MODE         = 'hubshoply/advanced/test_mode';
     const XML_CONFIG_PATH_TRACK_CUSTOMERS   = 'hubshoply/advanced/track_customers';
     const XML_CONFIG_PATH_USER_CONFIG       = 'hubshoply/advanced/user_config';
 
@@ -244,6 +246,18 @@ class Groove_Hubshoply_Model_Config
     }
 
     /**
+     * Get the remote service authorization endpoint.
+     *
+     * @param integer $storeId Store ID for context.
+     * 
+     * @return string
+     */
+    public function getAuthUrl($storeId = null)
+    {
+        return $this->isTestMode($storeId) ? self::REMOTE_TEST_AUTH_URL : self::REMOTE_AUTH_URL;
+    }
+
+    /**
      * Generate a remote callback-safe frontend URL.
      *
      * @param string  $route   The target frontend route.
@@ -317,6 +331,18 @@ class Groove_Hubshoply_Model_Config
     public function isEnabled($storeId = null)
     {
         return Mage::getStoreConfigFlag(self::XML_CONFIG_PATH_ENABLED, $storeId);
+    }
+
+    /**
+     * Determine whether test mode is enabled.
+     * 
+     * @param integer $storeId The store ID for context.
+     * 
+     * @return boolean
+     */
+    public function isTestMode($storeId = null)
+    {
+        return Mage::getStoreConfigFlag(self::XML_CONFIG_PATH_TEST_MODE, $storeId);
     }
 
     /**

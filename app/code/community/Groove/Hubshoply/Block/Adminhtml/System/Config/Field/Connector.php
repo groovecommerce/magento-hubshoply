@@ -59,6 +59,16 @@ class Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Connector
     }
 
     /**
+     * Get the current store ID from request parameters.
+     * 
+     * @return integer
+     */
+    private function _getStoreId()
+    {
+        return (int) Mage::app()->getStore($this->getRequest()->getParam('store'))->getId();
+    }
+
+    /**
      * Prepare the global layout.
      *
      * - Suggests system provisioning before normal setup.
@@ -70,6 +80,7 @@ class Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Connector
         parent::_prepareLayout();
 
         $helper = $this->helper('groove_hubshoply/oauth');
+        $config = Mage::getSingleton('groove_hubshoply/config');
 
         if ($this->needsProvisioning()) {
             $this->setTemplate('hubshoply/provisioning-notice.phtml');
@@ -78,7 +89,7 @@ class Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Connector
                 preg_replace(
                     '~https?://~',
                     '//',
-                    $helper->buildUrl(Groove_Hubshoply_Model_Config::REMOTE_AUTH_URI, null, true)
+                    $helper->buildUrl($config->getAuthUrl($this->_getStoreId()), null, true)
                 )
             );
         }
@@ -110,10 +121,9 @@ class Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Connector
     public function needsProvisioning()
     {
         $tests      = array('enabled', 'consumer', 'role'); 
-        $storeId    = Mage::app()->getStore($this->getRequest()->getParam('store'))->getId();
         $results    = Mage::getModel('groove_hubshoply/diagnostic')
             ->setSkipDependencyCheckFlag(true)
-            ->run($tests, $storeId);
+            ->run($tests, $this->_getStoreId());
             
         foreach ($results as $result) {
             if ( $result->getStatus() !== Groove_Hubshoply_Model_Diagnostic_Interface::STATUS_PASS ) {

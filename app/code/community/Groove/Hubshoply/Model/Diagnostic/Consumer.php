@@ -67,7 +67,11 @@ class Groove_Hubshoply_Model_Diagnostic_Consumer
      */
     public function run(Varien_Object $object)
     {
-        $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(null, false);
+        $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(
+            null,
+            false,
+            Mage::app()->getStore()->getId()
+        );
 
         $successful = $consumer->getId() > 0;
 

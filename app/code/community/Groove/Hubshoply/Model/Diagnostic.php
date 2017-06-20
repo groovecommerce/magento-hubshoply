@@ -133,6 +133,10 @@ class Groove_Hubshoply_Model_Diagnostic
             return -1;
         }
 
+        if ( !count($b->getModel()->getDependencies()) ) {
+            return -1;
+        }
+
         return 1;
     }
 
@@ -170,7 +174,7 @@ class Groove_Hubshoply_Model_Diagnostic
         $types          = $this->_loadTypeData($types);
         $tests          = $this->_prepareTests($types);
         $environment    = null;
-
+        
         if ( $storeId && ( $storeId != Mage::app()->getStore()->getId() ) ) {
             $environment = Mage::getSingleton('core/app_emulation')->startEnvironmentEmulation($storeId);
         }

@@ -167,7 +167,7 @@ class Groove_Hubshoply_Model_Resource_Setup
 
         $this->assignUserToRole($user->getId(), $role->getId());
 
-        $this->setupConsumer();
+        $this->setupConsumer($storeId);
 
         return $this;
     }
@@ -197,18 +197,20 @@ class Groove_Hubshoply_Model_Resource_Setup
         Mage::getConfig()->cleanCache();
 
         Mage::helper('groove_hubshoply/oauth')
-            ->getConsumer(null, true)
+            ->getConsumer(null, true, $storeId)
             ->delete();
     }
 
     /**
      * Provision the OAuth consumer record.
+     *
+     * @param integer $storeId The store ID for context.
      * 
      * @return Mage_Oauth_Model_Consumer
      */
-    public function setupConsumer()
+    public function setupConsumer($storeId)
     {
-        return Mage::helper('groove_hubshoply/oauth')->getConsumer(null, true);
+        return Mage::helper('groove_hubshoply/oauth')->getConsumer(null, true, $storeId);
     }
 
 }

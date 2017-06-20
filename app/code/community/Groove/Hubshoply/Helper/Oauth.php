@@ -92,15 +92,24 @@ class Groove_Hubshoply_Helper_Oauth
      * 
      * @param string  $name         The consumer name.
      * @param boolean $autoGenerate Optional flag to autogenerate if needed.
+     * @param integer $storeId      Optional store ID for context.
      * 
      * @return Mage_Oauth_Model_Consumer
      */
-    public function getConsumer($name = null, $autoGenerate = true)
+    public function getConsumer($name = null, $autoGenerate = true, $storeId = null)
     {
         if (is_null($name)) {
             $name = Groove_Hubshoply_Model_Config::OAUTH_CONSUMER;
         }
 
+        if ($storeId === true) {
+            $storeId = Mage::app()->getStore(Mage::app()->getRequest()->getParam('store'))->getId();
+        }
+
+        if ( (int) $storeId > 0 ) {
+            $name .= ' #' . strval($storeId);
+        }
+        
         $consumer = Mage::getModel('oauth/consumer')->load($name, 'name');
 
         if ($consumer->getId()) {
@@ -109,7 +118,7 @@ class Groove_Hubshoply_Helper_Oauth
             $helper     = Mage::helper('oauth');
             $consumer   = Mage::getModel('oauth/consumer')
                 ->setName($name)
-                ->setCallbackUrl(Groove_Hubshoply_Model_Config::REMOTE_AUTH_URI)
+                ->setCallbackUrl(Mage::getSingleton('groove_hubshoply/config')->getAuthUrl($storeId))
                 ->setKey($helper->generateConsumerKey())
                 ->setSecret($helper->generateConsumerSecret());
 

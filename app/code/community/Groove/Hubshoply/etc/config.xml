@@ -45,11 +45,12 @@
     <default>
         <hubshoply>
             <advanced>
-                <frontend_url></frontend_url>
-                <admin_url></admin_url>
                 <enabled>0</enabled>
+                <test_mode>0</test_mode>
                 <site_id></site_id>
                 <track_customers>0</track_customers>
+                <frontend_url></frontend_url>
+                <admin_url></admin_url>
                 <user_config></user_config>
             </advanced>
             <support>
@@ -157,6 +158,10 @@
         <hubshoply>
             <diagnostic>
                 <tests>
+                    <mode>
+                        <name><![CDATA[Integration Mode]]></name>
+                        <model>groove_hubshoply/diagnostic_mode</model>
+                    </mode>
                     <enabled>
                         <name><![CDATA[Enabled]]></name>
                         <model>groove_hubshoply/diagnostic_enabled</model>

@@ -117,7 +117,7 @@ class Groove_Hubshoply_Model_Diagnostic_Api
                 ->setAdminId($user->getId())
                 ->setType(Mage_Oauth_Model_Token::TYPE_REQUEST)
                 ->setAuthorized(1)
-                ->setExpires(date('Y-m-d h:i:s', time() + 60))
+                ->setExpires( date( Varien_Date::DATETIME_PHP_FORMAT, ( strtotime( now() ) + 60 ) ) )
                 ->setIsTemporary(true)
                 ->convertToAccess();
         } else {

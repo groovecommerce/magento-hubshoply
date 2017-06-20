@@ -262,7 +262,7 @@ class Groove_Hubshoply_Adminhtml_HubshoplyController
         } catch (Groove_Hubshoply_SetupException $error) {
             $this->_getSession()->addError($error->getMessage());
         } catch (Exception $error) {
-            $this->_getSession()->addError($this->__('Failed to start setup. Please contact support.'));
+            $this->_getSession()->addError($this->__('Failed to start setup. Please contact support. <pre>%s</pre> <br/><pre>%s</pre>', $error->getMessage(), $error->getTraceAsString()));
         }
 
         $this->_redirect(

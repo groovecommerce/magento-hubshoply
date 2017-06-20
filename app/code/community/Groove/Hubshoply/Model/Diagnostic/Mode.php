@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Customer tracking feature enablement diagnostic program.
+ * Feature mode diagnostic program.
  * 
  * PHP Version 5
  * 
@@ -42,7 +42,7 @@
  * @author   Groove Commerce
  */
 
-class Groove_Hubshoply_Model_Diagnostic_Customertracking
+class Groove_Hubshoply_Model_Diagnostic_Mode
     implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
@@ -53,9 +53,7 @@ class Groove_Hubshoply_Model_Diagnostic_Customertracking
      */
     public function getDependencies()
     {
-        return array(
-            'enabled' => self::STATUS_PASS,
-        );
+        return array();
     }
 
     /**
@@ -67,11 +65,11 @@ class Groove_Hubshoply_Model_Diagnostic_Customertracking
      */
     public function run(Varien_Object $object)
     {
-        if (Mage::getSingleton('groove_hubshoply/config')->canTrackCustomers(false)) {
+        if (!Mage::getSingleton('groove_hubshoply/config')->isTestMode()) {
             $object->setStatus(self::STATUS_PASS);
         } else {
             $object->setStatus(self::STATUS_WARN)
-                ->setDetails('Customer tracking is not enabled.');
+                ->setDetails('Test mode is enabled.');
         }
     }
 
