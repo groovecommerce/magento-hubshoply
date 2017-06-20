@@ -174,7 +174,7 @@ class Groove_Hubshoply_Model_Diagnostic_Api
                 )
             )
             ->setMethod('GET')
-            ->setUri(Mage::getUrl('api/rest/products'));
+            ->setUri(Mage::getSingleton('groove_hubshoply/config')->getFrontendUrl('api/rest/products'));
 
         $response = $client->request();
 
