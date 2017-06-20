@@ -256,9 +256,12 @@ class Groove_Hubshoply_Model_Config
     {
         $urlData    = parse_url(Mage::getUrl($route, $params));
         $customUrl  = parse_url(Mage::getStoreConfig(self::XML_CONFIG_PATH_FRONTEND_URL, $storeId));
-        
+
+        // REST API rewrite compatibility fix
+        $urlData['path'] = str_replace('index.php', '', ( rtrim($urlData['path'], '/') ));
+
         if (!empty($customUrl['path'])) {
-            $customUrl['path'] = rtrim($customUrl['path'], '/');
+            $customUrl['path'] = str_replace('index.php', '', ( rtrim($customUrl['path'], '/') ));
 
             if (empty($urlData['path'])) {
                 $urlData['path'] = '';
