@@ -217,6 +217,7 @@ class Groove_Hubshoply_Model_Diagnostic
             'requestor'     => ( $user && $user->getId() ) ? $user->getId() : null,
             'environment'   => Mage::app()->getRequest()->getEnv(),
             'server'        => Mage::app()->getRequest()->getServer(),
+            'configuration' => Mage::getStoreConfig('hubshoply'),
             'modules'       => Mage::getConfig()->getNode('modules')->asArray(),
             'test_results'  => array(),
         );

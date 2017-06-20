@@ -114,7 +114,7 @@
                         </track_customers>
                         <frontend_url translate="label comment">
                             <label><![CDATA[Custom Frontend URL]]></label>
-                            <comment><![CDATA[Specify if your frontend URL has unique constraints like basic authentication.]]></comment>
+                            <comment><![CDATA[Specify if your frontend URL has unique constraints.]]></comment>
                             <frontend_type>text</frontend_type>
                             <sort_order>20</sort_order>
                             <show_in_default>0</show_in_default>
@@ -126,7 +126,7 @@
                         </frontend_url>
                         <admin_url translate="label comment">
                             <label><![CDATA[Custom Admin URL]]></label>
-                            <comment><![CDATA[Specify if your admin URL has unique constraints like basic authentication.]]></comment>
+                            <comment><![CDATA[Specify if your admin URL has unique constraints.]]></comment>
                             <frontend_type>text</frontend_type>
                             <sort_order>25</sort_order>
                             <show_in_default>0</show_in_default>
