@@ -234,7 +234,7 @@
         <events>
             <checkout_onepage_controller_success_action>
                 <observers>
-                    <type>singelton</type>
+                    <type>singleton</type>
                     <model>groove_hubshoply/event</model>
                     <method>registerOrderForTracking</method>
                 </observers>
