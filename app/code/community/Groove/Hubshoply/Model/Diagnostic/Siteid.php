@@ -55,7 +55,7 @@ class Groove_Hubshoply_Model_Diagnostic_Siteid
      */
     private function _validateTrackingScript($url)
     {
-        $url  = preg_replace('~^//~', 'http://', $url);
+        $url  = preg_replace('~^//~', 'https://', $url);
         $http = new Varien_Http_Adapter_Curl();
 
         $http->addOption(CURLOPT_NOBODY, true);
@@ -92,7 +92,7 @@ class Groove_Hubshoply_Model_Diagnostic_Siteid
     {
         $block = Mage::app()->getLayout()->createBlock('groove_hubshoply/tracker');
 
-        if (!$this->_validateTrackingScript($block->getScriptUri())) {
+        if (!$this->_validateTrackingScript($block->getScriptUrl())) {
             $object->setStatus(self::STATUS_FAIL)
                 ->setDetails('Tracking script failed to load for the current site ID.');
         } else {
