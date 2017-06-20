@@ -48,6 +48,11 @@ class Groove_Hubshoply_Helper_Oauth
 
     /**
      * Construct a HubShop.ly communication URL.
+     *
+     * Output paramater notes:
+     * 
+     *  - magento_url => The storefront URL for primary API access
+     *  - oauth_url   => The callback URL to the admin controller for OAuth initiation
      * 
      * @param string                    $url     Target URL to extend.
      * @param bool                      $secure  Optional secure context flag.
@@ -62,6 +67,10 @@ class Groove_Hubshoply_Helper_Oauth
             $secure = Mage::app()->getStore()->isCurrentlySecure();
         }
 
+        if ($storeId === true) {
+            $storeId = Mage::app()->getStore(Mage::app()->getRequest()->getParam('store'))->getId();
+        }
+
         if (!$consumer) {
             $consumer = $this->getConsumer();
         }
@@ -69,12 +78,12 @@ class Groove_Hubshoply_Helper_Oauth
         $params = array(
             'magento_consumer_key'      => $consumer->getKey(),
             'magento_consumer_secret'   => $consumer->getSecret(),
-            'magento_url'               => Mage::app()->getStore($storeId)
-                ->getUrl(Mage_Core_Model_Store::URL_TYPE_WEB, $secure),
+            'magento_url'               => Mage::getSingleton('groove_hubshoply/config')
+                ->getFrontendUrl(null, array(), $storeId),
             'oauth_url'                 => Mage::getSingleton('groove_hubshoply/config')
                 ->getAdminUrl('adminhtml/oauth_authorize', array('_secure', $secure), $storeId),
         );
-
+        
         return preg_replace('/\?*/', '', $url) . '?' . http_build_query($params);
     }
 

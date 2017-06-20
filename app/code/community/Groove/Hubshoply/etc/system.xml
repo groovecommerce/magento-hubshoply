@@ -78,6 +78,7 @@
                     <show_in_default>0</show_in_default>
                     <show_in_website>0</show_in_website>
                     <show_in_store>1</show_in_store>
+                    <expanded>1</expanded>
                     <fields>
                         <enabled translate="label">
                             <label><![CDATA[Enabled]]></label>
@@ -111,11 +112,23 @@
                                 <enabled>1</enabled>
                             </depends>
                         </track_customers>
+                        <frontend_url translate="label comment">
+                            <label><![CDATA[Custom Frontend URL]]></label>
+                            <comment><![CDATA[Specify if your frontend URL has unique constraints like basic authentication.]]></comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>20</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <enabled>1</enabled>
+                            </depends>
+                        </frontend_url>
                         <admin_url translate="label comment">
                             <label><![CDATA[Custom Admin URL]]></label>
                             <comment><![CDATA[Specify if your admin URL has unique constraints like basic authentication.]]></comment>
                             <frontend_type>text</frontend_type>
-                            <sort_order>20</sort_order>
+                            <sort_order>25</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -127,7 +140,7 @@
                             <label><![CDATA[User Configuration]]></label>
                             <comment><![CDATA[Enter one parameter per line in format <code>name=value</code>. Also supports dynamic values.]]></comment>
                             <frontend_type>textarea</frontend_type>
-                            <sort_order>25</sort_order>
+                            <sort_order>30</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -143,6 +156,7 @@
                     <show_in_default>1</show_in_default>
                     <show_in_website>1</show_in_website>
                     <show_in_store>1</show_in_store>
+                    <expanded>1</expanded>
                     <fields>
                         <scope_notice translate="label">
                             <label><![CDATA[

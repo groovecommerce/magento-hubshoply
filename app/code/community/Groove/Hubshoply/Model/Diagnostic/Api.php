@@ -48,14 +48,18 @@ class Groove_Hubshoply_Model_Diagnostic_Api
     implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
+    // For development testing only -- live service will not regard this setting
     const VERIFY_PEER = false;
 
     /**
      * Determine whether the authorization endpoint is accessible.
+     *
+     * @param boolean $verifyPeer     Optional flag to control peer verification during test.
+     * @param boolean $asRedirectTest Optional flag to control response based on redirect detection.
      * 
      * @return boolean
      */
-    private function _checkOauthAuthorizationEndpoint($verifyPeer = true)
+    private function _checkOauthAuthorizationEndpoint($verifyPeer = true, $asRedirectTest = false)
     {
         $http = new Varien_Http_Adapter_Curl();
         $url  = Mage::getSingleton('groove_hubshoply/config')->getAdminUrl('adminhtml/oauth_authorize');
@@ -66,13 +70,20 @@ class Groove_Hubshoply_Model_Diagnostic_Api
             $http->addOption(CURLOPT_SSL_VERIFYPEER, false);
         }
 
+        if ($asRedirectTest) {
+            $http->addOption(CURLOPT_FOLLOWLOCATION, true);
+        }
+
         $http->write('GET', $url, null, '');
 
         $response = $http->read();
 
         $http->close();
 
-        return Zend_Http_Response::extractCode($response) === 200;
+        return in_array(
+            Zend_Http_Response::extractCode($response),
+            ( $asRedirectTest ? array(301, 302) : array(200) )
+        );
     }
 
     /**
@@ -87,6 +98,7 @@ class Groove_Hubshoply_Model_Diagnostic_Api
      */
     private function _generateToken(Mage_Oauth_Model_Consumer $consumer)
     {
+        $user       = Mage::getSingleton('admin/session')->getUser();
         $helper     = Mage::helper('oauth');
         $collection = Mage::getResourceModel('oauth/token_collection')
             ->addFieldToFilter('authorized', 1)
@@ -95,13 +107,17 @@ class Groove_Hubshoply_Model_Diagnostic_Api
             ->addFilterByRevoked(false);
 
         if (!$collection->getSize()) {
+            if ( !$user || !$user->getId() ) {
+                Mage::throwException('No admin user found for token generation.');
+            }
+
             $token = Mage::getModel('oauth/token')
                 ->setCallbackUrl($consumer->getCallbackUrl())
                 ->setConsumerId($consumer->getId())
-                ->setAdminId(1)
+                ->setAdminId($user->getId())
                 ->setType(Mage_Oauth_Model_Token::TYPE_REQUEST)
                 ->setAuthorized(1)
-                ->setExpires(date('Y-m-d h:i:s', time() + 300))
+                ->setExpires(date('Y-m-d h:i:s', time() + 60))
                 ->setIsTemporary(true)
                 ->convertToAccess();
         } else {
@@ -189,7 +205,10 @@ class Groove_Hubshoply_Model_Diagnostic_Api
     {
         $object->setStatus(self::STATUS_PASS);
 
-        if (!$this->_checkOauthAuthorizationEndpoint(false)) {
+        if ($this->_checkOauthAuthorizationEndpoint(null, true)) {
+            $object->setStatus(self::STATUS_WARN)
+                ->setDetails('Encountered redirect on authorization endpoint.');
+        } else if (!$this->_checkOauthAuthorizationEndpoint(false)) {
             $object->setStatus(self::STATUS_FAIL)
                 ->setDetails('Authorization endpoint could not be reached.');
 

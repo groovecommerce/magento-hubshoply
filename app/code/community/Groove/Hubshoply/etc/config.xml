@@ -45,6 +45,7 @@
     <default>
         <hubshoply>
             <advanced>
+                <frontend_url></frontend_url>
                 <admin_url></admin_url>
                 <enabled>0</enabled>
                 <site_id></site_id>

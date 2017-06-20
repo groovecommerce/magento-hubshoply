@@ -55,12 +55,13 @@ class Groove_Hubshoply_Model_Config
     const XML_CONFIG_PATH_ADMIN_URL         = 'hubshoply/advanced/admin_url';
     const XML_CONFIG_PATH_DIAGNOSTIC_TESTS  = 'global/hubshoply/diagnostic/tests';
     const XML_CONFIG_PATH_ENABLED           = 'hubshoply/advanced/enabled';
+    const XML_CONFIG_PATH_FRONTEND_URL      = 'hubshoply/advanced/frontend_url';
     const XML_CONFIG_PATH_SITE_ID           = 'hubshoply/advanced/site_id';
     const XML_CONFIG_PATH_TRACK_CUSTOMERS   = 'hubshoply/advanced/track_customers';
     const XML_CONFIG_PATH_USER_CONFIG       = 'hubshoply/advanced/user_config';
 
-    protected $_eventPrefix = 'hubshoply_config';
-    protected $_options     = array();
+    protected $_eventPrefix                 = 'hubshoply_config'; // Observe after-load to add custom config
+    protected $_options                     = array();
 
     /**
      * Local constructor.
@@ -73,6 +74,33 @@ class Groove_Hubshoply_Model_Config
 
         // Autoload data
         $this->load();
+    }
+
+    /**
+     * Change the URL scheme if the current secure context would contradict frontend URL settings.
+     *
+     * Criteria:
+     *
+     *  - Given URL scheme is HTTPS
+     *  - Store secure URL is configured using HTTPS; or,
+     *  - Store is configured not to use secure URLs in frontend
+     * 
+     * @param array &$data A parsed URL.
+     * 
+     * @return void
+     */
+    private function _adjustFrontendUrlScheme(array &$data)
+    {
+        if (
+            !empty($data['scheme']) &&
+            strcasecmp($data['scheme'], 'https') === 0 &&
+            (
+                strcasecmp('https', substr(Mage::getStoreConfig('web/secure/base_url'), 0, 5)) !== 0 ||
+                !Mage::getStoreConfigFlag('web/secure/use_in_frontend')
+            )
+        ) {
+            $data['scheme'] = 'http';
+        }
     }
 
     /**
@@ -206,6 +234,42 @@ class Groove_Hubshoply_Model_Config
             $customUrl['path'] = $customUrl['path'] . str_replace($customUrl['path'], '', $urlData['path']);
         }
 
+        // @see bundled functions.php for polyfill
+        return http_build_url(
+            array_merge(
+                array_filter($urlData),
+                array_filter($customUrl)
+            )
+        );
+    }
+
+    /**
+     * Generate a remote callback-safe frontend URL.
+     *
+     * @param string  $route   The target frontend route.
+     * @param array   $params  Optional URL parameters.
+     * @param integer $storeId Store ID for context.
+     * 
+     * @return string
+     */
+    public function getFrontendUrl($route = '', array $params = array(), $storeId = null)
+    {
+        $urlData    = parse_url(Mage::getUrl($route, $params));
+        $customUrl  = parse_url(Mage::getStoreConfig(self::XML_CONFIG_PATH_FRONTEND_URL, $storeId));
+        
+        if (!empty($customUrl['path'])) {
+            $customUrl['path'] = rtrim($customUrl['path'], '/');
+
+            if (empty($urlData['path'])) {
+                $urlData['path'] = '';
+            }
+
+            $customUrl['path'] = $customUrl['path'] . str_replace($customUrl['path'], '', $urlData['path']);
+        }
+
+        $this->_adjustFrontendUrlScheme($urlData);
+
+        // @see bundled functions.php for polyfill
         return http_build_url(
             array_merge(
                 array_filter($urlData),

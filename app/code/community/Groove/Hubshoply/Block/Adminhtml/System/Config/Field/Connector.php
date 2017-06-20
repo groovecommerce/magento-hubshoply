@@ -78,7 +78,7 @@ class Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Connector
                 preg_replace(
                     '~https?://~',
                     '//',
-                    $helper->buildUrl(Groove_Hubshoply_Model_Config::REMOTE_AUTH_URI)
+                    $helper->buildUrl(Groove_Hubshoply_Model_Config::REMOTE_AUTH_URI, null, true)
                 )
             );
         }
