@@ -52,6 +52,8 @@ class Groove_Hubshoply_Model_Config
     const REMOTE_AUTH_URL                   = 'https://magento.hubshop.ly/auth/magento';
     const REMOTE_TEST_AUTH_URL              = 'https://hubshoply-magento-staging.herokuapp.com/auth/magento';
     const ROLE_NAME                         = 'HubShop.ly';
+    const TRACKING_SCRIPT_URI               = '//magento.hubshop.ly/shops';
+    const TRACKING_SCRIPT_TEST_URI          = '//hubshoply-magento-staging.herokuapp.com/shops';
 
     const XML_CONFIG_PATH_ADMIN_URL         = 'hubshoply/advanced/admin_url';
     const XML_CONFIG_PATH_DIAGNOSTIC_TESTS  = 'global/hubshoply/diagnostic/tests';
@@ -319,6 +321,21 @@ class Groove_Hubshoply_Model_Config
         }
 
         return $id;
+    }
+
+    /**
+     * Generate a URL to the tracking script.
+     *
+     * @param integer $storeId Store ID for context.
+     * 
+     * @return string
+     */
+    public function getTrackingScriptUrl($storeId = null)
+    {
+        $siteId = $this->getSiteId(true, $storeId);
+        $uri    = $this->isTestMode() ? self::TRACKING_SCRIPT_TEST_URI : self::TRACKING_SCRIPT_URI;
+
+        return rtrim($uri, '/') . "/{$siteId}.js";
     }
 
     /**

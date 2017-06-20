@@ -46,8 +46,6 @@ class Groove_Hubshoply_Block_Tracker
     extends Mage_Core_Block_Template
 {
 
-    const SCRIPT_URI = '//magento.hubshop.ly/shops';
-
     /**
      * Render if enabled.
      * 
@@ -89,9 +87,7 @@ class Groove_Hubshoply_Block_Tracker
      */
     public function getScriptUrl()
     {
-        $siteId = $this->getConfig()->getSiteId();
-
-        return rtrim(self::SCRIPT_URI, '/') . "/{$siteId}.js";
+        return $this->getConfig()->getTrackingScriptUrl();
     }
     
     /**

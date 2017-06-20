@@ -90,9 +90,9 @@ class Groove_Hubshoply_Model_Diagnostic_Siteid
      */
     public function run(Varien_Object $object)
     {
-        $block = Mage::app()->getLayout()->createBlock('groove_hubshoply/tracker');
+        $url = Mage::getSingleton('groove_hubshoply/config')->getTrackingScriptUrl();
 
-        if (!$this->_validateTrackingScript($block->getScriptUrl())) {
+        if (!$this->_validateTrackingScript($url)) {
             $object->setStatus(self::STATUS_FAIL)
                 ->setDetails('Tracking script failed to load for the current site ID.');
         } else {
