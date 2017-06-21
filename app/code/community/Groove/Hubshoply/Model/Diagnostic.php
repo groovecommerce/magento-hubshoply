@@ -162,6 +162,34 @@ class Groove_Hubshoply_Model_Diagnostic
     }
 
     /**
+     * Post-run handler.
+     * 
+     * @param Varien_Data_Collection $results The test results.
+     * 
+     * @return Groove_Hubshoply_Model_Diagnostic
+     */
+    protected function _afterRun(Varien_Data_Collection $results)
+    {
+        Mage::helper('groove_hubshoply/debug')->setCanRecord(true);
+
+        return $this;
+    }
+
+    /**
+     * Pre-run handler.
+     * 
+     * @param Varien_Data_Collection $tests The prepared test data.
+     * 
+     * @return Groove_Hubshoply_Model_Diagnostic
+     */
+    protected function _beforeRun(Varien_Data_Collection $tests)
+    {
+        Mage::helper('groove_hubshoply/debug')->setCanRecord(false);
+
+        return $this;
+    }
+
+    /**
      * Perform one or more diagnostic tests.
      *
      * @param array   $types   The types of tests to run
@@ -175,6 +203,8 @@ class Groove_Hubshoply_Model_Diagnostic
         $tests          = $this->_prepareTests($types);
         $environment    = null;
         
+        $this->_beforeRun($tests);
+
         if ( $storeId && ( $storeId != Mage::app()->getStore()->getId() ) ) {
             $environment = Mage::getSingleton('core/app_emulation')->startEnvironmentEmulation($storeId);
         }
@@ -200,6 +230,8 @@ class Groove_Hubshoply_Model_Diagnostic
 
             $test->setFinishedAt(now());
         }
+
+        $this->_afterRun($tests);
 
         if ($environment) {
             Mage::getSingleton('core/app_emulation')->stopEnvironmentEmulation($environment);

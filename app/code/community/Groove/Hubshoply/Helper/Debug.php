@@ -46,6 +46,8 @@ class Groove_Hubshoply_Helper_Debug
     extends Mage_Core_Helper_Abstract
 {
 
+    private $_canRecord = true;
+
     /**
      * Create a new log entry.
      * 
@@ -57,10 +59,14 @@ class Groove_Hubshoply_Helper_Debug
     public function log($message, $level = Zend_Log::DEBUG)
     {
         try {
-            Mage::getModel('groove_hubshoply/log')
-                ->setMessage($message)
-                ->setLevel($level)
-                ->save();
+            if ($this->_canRecord) {
+                Mage::getModel('groove_hubshoply/log')
+                    ->setMessage($message)
+                    ->setLevel($level)
+                    ->save();
+            } else {
+                Mage::log($message, $level);
+            }
         } catch (Exception $error) {
             Mage::logException($error);
         }
@@ -78,6 +84,20 @@ class Groove_Hubshoply_Helper_Debug
     public function logException(Exception $error)
     {
         $this->log($error->getMessage(), Zend_Log::ERR);
+
+        return $this;
+    }
+
+    /**
+     * Set the log recording flag.
+     * 
+     * @param boolean $flag
+     *
+     * @return Groove_Hubshoply_Helper_Debug
+     */
+    public function setCanRecord($flag = true)
+    {
+        $this->_canRecord = $flag;
 
         return $this;
     }
