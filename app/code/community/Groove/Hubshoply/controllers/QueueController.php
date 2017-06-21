@@ -198,8 +198,8 @@ class Groove_Hubshoply_QueueController
 
             $token = Mage::getModel('groove_hubshoply/token')
                 ->setConsumerId($consumer->getId())
-                ->setToken( Mage::helper( 'oauth' )->generateToken() )
-                ->setExpires( $token::DAY )
+                ->setToken(Mage::helper('oauth')->generateToken())
+                ->setExpires(Groove_Hubshoply_Model_Token::DAY)
                 ->save();
 
             $response = array(
