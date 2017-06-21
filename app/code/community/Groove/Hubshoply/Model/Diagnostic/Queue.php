@@ -68,7 +68,7 @@ class Groove_Hubshoply_Model_Diagnostic_Queue
      */
     public function run(Varien_Object $object)
     {
-        $collection = Mage::getResourceModel('groove_hubshopy/queueitem_collection');
+        $collection = Mage::getResourceModel('groove_hubshoply/queueitem_collection');
 
         if ( $collection->getSize() > 0 ) {
             $object->setStatus(self::STATUS_PASS)

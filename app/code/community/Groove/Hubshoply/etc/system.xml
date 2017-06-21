@@ -48,7 +48,7 @@
         <hubshoply translate="label" module="groove_hubshoply">
             <label><![CDATA[Configuration]]></label>
             <tab>hubshoply</tab>
-            <sort_order>1000</sort_order>
+            <sort_order>5</sort_order>
             <show_in_default>1</show_in_default>
             <show_in_website>1</show_in_website>
             <show_in_store>1</show_in_store>
@@ -212,7 +212,7 @@
         <hubshoply_log translate="label" module="groove_hubshoply">
             <label><![CDATA[View Log]]></label>
             <tab>hubshoply</tab>
-            <sort_order>1000</sort_order>
+            <sort_order>10</sort_order>
             <show_in_default>1</show_in_default>
             <show_in_website>1</show_in_website>
             <show_in_store>1</show_in_store>
