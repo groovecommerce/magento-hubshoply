@@ -112,7 +112,6 @@ class Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Connector
      *
      * Provisioning needed if any are true:
      * 
-     *  - Feature not enabled
      *  - OAuth consumer not found
      *  - REST role not found
      * 
@@ -120,7 +119,7 @@ class Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Connector
      */
     public function needsProvisioning()
     {
-        $tests      = array('enabled', 'consumer', 'role'); 
+        $tests      = array('consumer', 'role'); 
         $results    = Mage::getModel('groove_hubshoply/diagnostic')
             ->setSkipDependencyCheckFlag(true)
             ->run($tests, $this->_getStoreId());

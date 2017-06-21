@@ -169,6 +169,8 @@ class Groove_Hubshoply_Model_Resource_Setup
 
         $this->setupConsumer($storeId);
 
+        Mage::helper('groove_hubshoply/debug')->log('HubShop.ly system installation completed.', Zend_Log:NOTICE);
+
         return $this;
     }
 
@@ -215,7 +217,20 @@ class Groove_Hubshoply_Model_Resource_Setup
      */
     public function setupConsumer($storeId)
     {
-        return Mage::helper('groove_hubshoply/oauth')->getConsumer(null, true, $storeId);
+        $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(null, false, $storeId);
+
+        // Upgrade consumers from pre-stable releases
+        if ( $consumer->getName() === Groove_Hubshoply_Model_Config::OAUTH_CONSUMER ) {
+            $consumer->setName( Groove_Hubshoply_Model_Config::OAUTH_CONSUMER . " #{$storeId}" )
+                ->setCallbackUrl(Mage::getSingleton('groove_hubshoply/config')->getAuthUrl($storeId))
+                ->save();
+        } else if (!$consumer->getId()) {
+            $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(null, true, $storeId);
+        } else {
+            throw new Groove_Hubshoply_SetupException('Failed to locate or create consumer.');
+        }
+
+        return $consumer;
     }
 
 }

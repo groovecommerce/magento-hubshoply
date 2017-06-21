@@ -129,6 +129,9 @@ class Groove_Hubshoply_Helper_Oauth
             } catch(Exception $error) {
                 Mage::logException($error);
             }
+        } else {
+            // Fallback to support older versions (single-store)
+            $consumer->load(Groove_Hubshoply_Model_Config::OAUTH_CONSUMER, 'name');
         }
 
         return $consumer;
