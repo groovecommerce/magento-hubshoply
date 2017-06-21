@@ -169,7 +169,7 @@ class Groove_Hubshoply_Model_Resource_Setup
 
         $this->setupConsumer($storeId);
 
-        Mage::helper('groove_hubshoply/debug')->log('HubShop.ly system installation completed.', Zend_Log:NOTICE);
+        Mage::helper('groove_hubshoply/debug')->log('HubShop.ly system installation completed.', Zend_Log::NOTICE);
 
         return $this;
     }
