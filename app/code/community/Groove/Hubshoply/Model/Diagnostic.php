@@ -252,13 +252,22 @@ class Groove_Hubshoply_Model_Diagnostic
             ->setPageSize(10)
             ->setOrder('created_at', 'DESC')
             ->toArray();
+        $config = array_merge(
+            Mage::getStoreConfig('hubshoply'),
+            array(
+                'connector_url' => Mage::helper('groove_hubshoply/oauth')
+                    ->buildUrl(
+                        Mage::getSingleton('groove_hubshoply/config')->getAuthUrl()
+                    )
+            )
+        );
         $output = array(
             'exported_at'   => now(),
             'requestor'     => ( $user && $user->getId() ) ? $user->getId() : null,
             'environment'   => Mage::app()->getRequest()->getEnv(),
             'server'        => Mage::app()->getRequest()->getServer(),
             'modules'       => Mage::getConfig()->getNode('modules')->asArray(),
-            'configuration' => Mage::getStoreConfig('hubshoply'),
+            'configuration' => $config,
             'recent_log'    => $logs['items'],
             'test_results'  => array(),
         );
