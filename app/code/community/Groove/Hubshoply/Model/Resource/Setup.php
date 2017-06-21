@@ -225,6 +225,7 @@ class Groove_Hubshoply_Model_Resource_Setup
             
             $consumer->setName( Groove_Hubshoply_Model_Config::OAUTH_CONSUMER . " #{$storeId}" )
                 ->setCallbackUrl(Mage::getSingleton('groove_hubshoply/config')->getAuthUrl($storeId))
+                ->setWasUpgraded(true)
                 ->save();
         } else if (!$consumer->getId()) {
             $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(null, true, $storeId);

@@ -97,6 +97,12 @@ $installer->getConnection()->createTable($logTable);
  * Upgrade the consumer.
  */
 
-$this->setupConsumer(Mage_Core_Model_App::ADMIN_STORE_ID);
+$consumer = $this->setupConsumer(Mage_Core_Model_App::ADMIN_STORE_ID);
+
+if ($consumer->getWasUpgraded()) {
+    $this->enableFeatures(
+        Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId()
+    );
+}
 
 $installer->endSetup();
