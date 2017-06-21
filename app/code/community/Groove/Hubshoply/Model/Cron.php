@@ -45,6 +45,19 @@
 class Groove_Hubshoply_Model_Cron
 {
 
+    /* @var $_debug Groove_Hubshoply_Helper_Debug */
+    private $_debug;
+
+    /**
+     * Constructor.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->_debug = Mage::helper('groove_hubshoply/debug');
+    }
+
     /**
      * Removes expired auth tokens.
      * 
@@ -54,7 +67,9 @@ class Groove_Hubshoply_Model_Cron
      */
     public function pruneExpiredTokens(Mage_Cron_Model_Schedule $schedule)
     {
-        Mage::helper('groove_hubshoply/cron')->pruneExpiredTokens();
+        $total = Mage::helper('groove_hubshoply/cron')->pruneExpiredTokens();
+
+        $this->_debug->log(sprintf('Pruned %d expired tokens.', $total), Zend_Log::INFO);
     }
 
     /**
@@ -66,11 +81,12 @@ class Groove_Hubshoply_Model_Cron
      */
     public function pruneStaleQueueitems(Mage_Cron_Model_Schedule $schedule)
     {
-        $thisJobCode = $schedule->getJobCode();
-        //get what age classifies a queue item as "stale"
-        $staleLength = (string)$this->getJobConfig($thisJobCode,'stale_length_in_days');
-        //clear "stale" items
-        Mage::helper('groove_hubshoply/cron')->pruneStaleQueueItems($staleLength);
+        $jobCode    = $schedule->getJobCode();
+        $length     = (string) $this->getJobConfig($jobCode, 'stale_length_in_days');
+
+        $total = Mage::helper('groove_hubshoply/cron')->pruneStaleQueueItems($length);
+
+        $this->_debug->log(sprintf('Pruned %d stale queue items.', $total), Zend_Log::INFO);
     }
 
     /**
@@ -82,10 +98,12 @@ class Groove_Hubshoply_Model_Cron
      */
     public function findAbandonCarts(Mage_Cron_Model_Schedule $schedule)
     {
-        $thisJobCode = $schedule->getJobCode();
-        //all carts older than `$abandonLength` with no order are "abandoned"
-        $abandonLength = (string)$this->getJobConfig($thisJobCode,'minutes_until_abandoned');
-        Mage::helper('groove_hubshoply/cron')->findAbandonCarts($abandonLength);
+        $jobCode    = $schedule->getJobCode();
+        $length     = (string)$this->getJobConfig($jobCode, 'minutes_until_abandoned');
+
+        $total = Mage::helper('groove_hubshoply/cron')->findAbandonCarts($length);
+
+        $this->_debug->log(sprintf('Queued %d abandoned carts.', $total), Zend_Log::INFO);
     }
 
     /**

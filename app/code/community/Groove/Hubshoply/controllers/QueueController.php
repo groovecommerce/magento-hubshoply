@@ -213,6 +213,8 @@ class Groove_Hubshoply_QueueController
                 ->setHeader('Content-Type', 'application/json')
                 ->setBody(Mage::helper('core')->jsonEncode($response))
                 ->sendResponse();
+
+            exit;
         } catch (Mage_Oauth_Exception $error) {
             $this->_sendError($error->getCode(), 'OAuth Exception', $error->getMessage());
         } catch (Exception $error) {

@@ -49,7 +49,7 @@ class Groove_Hubshoply_Helper_Cron
     /**
      * This function will delete all expired authentication tokens.
      *
-     * @return void
+     * @return integer
      */
     public function pruneExpiredTokens()
     {
@@ -65,7 +65,12 @@ class Groove_Hubshoply_Helper_Cron
         //select those who are past expiration
         $tokens->getSelect()->having('time_diff_token_expirey <= 0');
         //delete them
+        
+        $total = $tokens->getSize();
+
         $tokens->walk('delete');
+
+        return $total;
     }
 
     /**
@@ -73,7 +78,7 @@ class Groove_Hubshoply_Helper_Cron
      * 
      * @param int $days The age limit for queue items.
      *
-     * @return void
+     * @return integer
      */
     public function pruneStaleQueueItems($days)
     {
@@ -88,7 +93,12 @@ class Groove_Hubshoply_Helper_Cron
         //filter to get all items older than `$days` days
         $queueitems->getSelect()->having('date_diff_queue_age >= '.$days);
         //delete them
+        
+        $total = $queueitems->getSize();
+
         $queueitems->walk('delete');
+
+        return $total;
     }
 
     /**
@@ -96,7 +106,7 @@ class Groove_Hubshoply_Helper_Cron
      * 
      * @param int $minutes The age an order-less cart/quote is considered abandoned
      *
-     * @return void
+     * @return integer
      */
     public function findAbandonCarts($minutes)
     {
@@ -122,8 +132,13 @@ class Groove_Hubshoply_Helper_Cron
         //All "abandoned carts" that have since been ordered can be removed from the abandoned cart index
         $converted = Mage::getModel('groove_hubshoply/abandonedcart')->getCollection()
                         ->addFieldToFilter('quote_id',array('nin'=>$abandonedIds))->walk('delete');
+
+        $total = count($abandonedIds);
+
         //Add or update Abandoned cart index
         $abandoned->walk(array($this,'trackAbandonCart'));
+
+        return $total;
     }
 
     /**

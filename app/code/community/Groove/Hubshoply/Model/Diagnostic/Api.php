@@ -52,6 +52,28 @@ class Groove_Hubshoply_Model_Diagnostic_Api
     const VERIFY_PEER = false;
 
     /**
+     * Attempt to verify redirect rules for API access.
+     * 
+     * @return boolean
+     */
+    private function _checkRedirectRule()
+    {
+        $server         = (string) Mage::app()->getRequest()->getServer('SERVER_SOFTWARE');
+        $expectedString = null;
+        $contents       = null;
+
+        if (preg_match('/apache/im', $server)) {
+            $expectedString = '~^[\s\r\n]*[^#]*RewriteRule\s\^/?api/rest~m';
+            $contents       = @file_get_contents( rtrim(Mage::getBaseDir(), DS) . DS . '.htaccess' );
+        } else if (preg_match('/nginx/im', $server)) {
+            $expectedString = '~^[\s\r\n]*[^#]*rewrite\s\^/?api/rest~m';
+            $contents       = @file_get_contents('/etc/nginx/nginx.conf');
+        }
+
+        return !( $contents && $expectedString && !preg_match($expectedString, $contents) );
+    }
+
+    /**
      * Determine whether the authorization endpoint is accessible.
      *
      * @param boolean $verifyPeer     Optional flag to control peer verification during test.
@@ -283,6 +305,13 @@ class Groove_Hubshoply_Model_Diagnostic_Api
         $skipHubshoplyEndpointTest = false;
 
         $object->setStatus(self::STATUS_PASS);
+
+        if (!$this->_checkRedirectRule()) {
+            $object->setStatus(self::STATUS_WARN)
+                ->setDetails('Magento API redirect rule was not found.');
+
+            return;
+        }
 
         if ($this->_checkOauthAuthorizationEndpoint(null, true)) {
             $object->setStatus(self::STATUS_WARN)
