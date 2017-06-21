@@ -118,7 +118,7 @@ function resolve_store_id() {
         ->setPageSize(1)
         ->getFirstItem();
 
-    if (!$queueItem->getStoreId()) {
+    if ($queueItem->getStoreId()) {
         return $queueItem->getStoreId();
     }
 
