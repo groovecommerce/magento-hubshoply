@@ -189,6 +189,11 @@ class Groove_Hubshoply_QueueController
                 'key'
             );
             
+            Mage::helper('groove_hubshoply/debug')->log(
+                sprintf('Request to authenticate on queue from %s', Mage::helper('core/http')->getRemoteAddr()),
+                Zend_Log::INFO
+            );
+
             $this->_validateConsumer($consumer);
 
             $token = Mage::getModel('groove_hubshoply/token')
@@ -241,6 +246,11 @@ class Groove_Hubshoply_QueueController
     public function viewAction()
     {
         try {
+            Mage::helper('groove_hubshoply/debug')->log(
+                sprintf('Request to view queue from %s', Mage::helper('core/http')->getRemoteAddr()),
+                Zend_Log::INFO
+            );
+
             $this->_checkAuthorization();
 
             $request    = $this->getRequest();
@@ -300,6 +310,11 @@ class Groove_Hubshoply_QueueController
     {
         try {
             $request = $this->getRequest();
+
+            Mage::helper('groove_hubshoply/debug')->log(
+                sprintf('Request to delete queue items from %s', Mage::helper('core/http')->getRemoteAddr()),
+                Zend_Log::INFO
+            );
 
             $this->_checkAuthorization();
 
