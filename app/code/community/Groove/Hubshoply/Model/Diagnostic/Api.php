@@ -82,7 +82,7 @@ class Groove_Hubshoply_Model_Diagnostic_Api
 
         return in_array(
             Zend_Http_Response::extractCode($response),
-            ( $asRedirectTest ? array(301, 302) : array(200) )
+            ( $asRedirectTest ? array(301, 302) : array(200, 401, 403) )
         );
     }
 
@@ -104,7 +104,10 @@ class Groove_Hubshoply_Model_Diagnostic_Api
 
         $http->close();
 
-        return Zend_Http_Response::extractCode($response) === 200;
+        return in_array(
+            Zend_Http_Response::extractCode($response),
+            array(200, 401, 403)
+        );
     }
 
     /**
