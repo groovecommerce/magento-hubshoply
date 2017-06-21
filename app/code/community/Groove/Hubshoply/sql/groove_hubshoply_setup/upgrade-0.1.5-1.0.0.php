@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Install log table.
+ * Install log table, upgrade consumer.
  * 
  * PHP Version 5
  * 
@@ -92,5 +92,11 @@ $logTable = $installer->getConnection()
     );
 
 $installer->getConnection()->createTable($logTable);
+
+/**
+ * Upgrade the consumer.
+ */
+
+$this->setupConsumer(Mage_Core_Model_App::ADMIN_STORE_ID);
 
 $installer->endSetup();
