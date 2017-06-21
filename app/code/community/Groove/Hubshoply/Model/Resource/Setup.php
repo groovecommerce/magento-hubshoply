@@ -71,15 +71,16 @@ class Groove_Hubshoply_Model_Resource_Setup
      */
     public function enableFeatures($storeId = null)
     {
-        $storeId = (int) Mage::app()->getStore($storeId)->getId();
+        $scope = 'stores';
 
         if (!$storeId) {
-            throw new Groove_Hubshoply_SetupException(sprintf('Store ID "%d" is not valid.', $storeId));
+            $scope      = 'default';
+            $storeId    = null;
         }
 
         Mage::getConfig()
-            ->saveConfig(Groove_Hubshoply_Model_Config::XML_CONFIG_PATH_ENABLED, '1', 'stores', $storeId)
-            ->saveConfig(Groove_Hubshoply_Model_Config::XML_CONFIG_PATH_TRACK_CUSTOMERS, '1', 'stores', $storeId)
+            ->saveConfig(Groove_Hubshoply_Model_Config::XML_CONFIG_PATH_ENABLED, '1', $scope, $storeId)
+            ->saveConfig(Groove_Hubshoply_Model_Config::XML_CONFIG_PATH_TRACK_CUSTOMERS, '1', $scope, $storeId)
             ->cleanCache();
 
         return $this;
