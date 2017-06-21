@@ -221,6 +221,8 @@ class Groove_Hubshoply_Model_Resource_Setup
 
         // Upgrade consumers from pre-stable releases
         if ( $consumer->getName() === Groove_Hubshoply_Model_Config::OAUTH_CONSUMER ) {
+            $storeId = Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
+            
             $consumer->setName( Groove_Hubshoply_Model_Config::OAUTH_CONSUMER . " #{$storeId}" )
                 ->setCallbackUrl(Mage::getSingleton('groove_hubshoply/config')->getAuthUrl($storeId))
                 ->save();

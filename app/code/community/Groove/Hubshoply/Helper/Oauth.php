@@ -72,7 +72,7 @@ class Groove_Hubshoply_Helper_Oauth
         }
 
         if (!$consumer) {
-            $consumer = $this->getConsumer();
+            $consumer = $this->getConsumer(null, true, $storeId);
         }
 
         $params = array(
