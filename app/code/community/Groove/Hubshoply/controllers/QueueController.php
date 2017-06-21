@@ -124,7 +124,7 @@ class Groove_Hubshoply_QueueController
         );
 
         $this->getResponse()
-            ->setHttpResponseCode($code);
+            ->setHttpResponseCode($code)
             ->setBody(Mage::helper('core')->jsonEncode($data));
 
         if (is_callable($callback)) {
