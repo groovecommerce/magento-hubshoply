@@ -120,6 +120,26 @@ class Groove_Hubshoply_Adminhtml_HubshoplyController
     }
 
     /**
+     * Clear system log action.
+     * 
+     * @return void
+     */
+    public function clearLogAction()
+    {
+        try {
+            Mage::getResourceModel('groove_hubshoply/log_collection')->walk('delete');
+
+            $this->_getSession()->addSuccess($this->__('HubShop.ly system log cleared.'));
+        } catch (Groove_Hubshoply_SetupException $error) {
+            $this->_getSession()->addError($error->getMessage());
+        } catch (Exception $error) {
+            $this->_getSession()->addError($this->__('Failed to reset setup state. Please contact support.' . $error->getMessage()));
+        }
+
+        $this->_redirectReferer();
+    }
+
+    /**
      * Download diagnostics report action.
      *
      * - Outputs JSON with generated file URL.

@@ -1,12 +1,11 @@
-<?xml version="1.0"?>
-<!--
+<?php
 
 /**
  * HubShop.ly Magento
  * 
- * Admin ACL configuration.
+ * Log cron model.
  * 
- * @category  Configuration
+ * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
  * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
@@ -35,28 +34,54 @@
  * SOFTWARE.
  */
 
--->
-<config>
-    <acl>
-        <resources>
-            <admin>
-                <children>
-                    <system>
-                        <children>
-                            <config>
-                                <children>
-                                    <hubshoply translate="title" module="groove_hubshoply">
-                                        <title><![CDATA[HubShop.ly]]></title>
-                                    </hubshoply>
-                                    <hubshoply_log translate="title" module="groove_hubshoply">
-                                        <title><![CDATA[HubShop.ly Log View]]></title>
-                                    </hubshoply_log>
-                                </children>
-                            </config>
-                        </children>
-                    </system>
-                </children>
-            </admin>
-        </resources>
-    </acl>
-</config>
+/**
+ * Class declaration
+ *
+ * @category Class_Type_Model
+ * @package  Groove_Hubshoply
+ * @author   Groove Commerce
+ */
+
+class Groove_Hubshoply_Model_Cron_Log
+{
+
+    /**
+     * Get the log lifetime as an internal datetime string.
+     *
+     * - Doesn't care about store locale, rough timestamps are fine.
+     * 
+     * @return string
+     */
+    private function _getLifetimeDate()
+    {
+        return Mage::app()->getLocale()
+            ->date(null, null, null, false)
+            ->subSecond(Groove_Hubshoply_Model_Config::LOG_ENTRY_LIFETIME)
+            ->toString(Varien_Date::DATETIME_INTERNAL_FORMAT);
+    }
+
+    /**
+     * Clean the log store.
+     * 
+     * @param Mage_Cron_Model_Schedule $schedule The scheduled task details.
+     * 
+     * @return 
+     */
+    public function clean(Mage_Cron_Model_Schedule $schedule)
+    {
+        $collection = Mage::getResourceModel('groove_hubshoply/log_collection')
+            ->addFieldToFilter(
+                'created_at',
+                array(
+                    'lt' => $this->_getLifetimeDate(),
+                )
+            );
+
+        $count = $collection->getSize();
+
+        $collection->walk('delete');
+
+        return sprintf('Deleted %d records.', $count);
+    }
+
+}

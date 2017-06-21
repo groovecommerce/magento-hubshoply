@@ -76,6 +76,9 @@
                     <abandonedcart>
                         <table>hubshoply_abandonedcart</table>
                     </abandonedcart>
+                    <log>
+                        <table>hubshoply_log</table>
+                    </log>
                 </entities>
             </groove_hubshoply_resource>
         </models>
@@ -190,6 +193,14 @@
                         <name><![CDATA[API Connectivity]]></name>
                         <model>groove_hubshoply/diagnostic_api</model>
                     </api>
+                    <queue>
+                        <name><![CDATA[Queue Status]]></name>
+                        <model>groove_hubshoply/diagnostic_queue</model>
+                    </queue>
+                    <log>
+                        <name><![CDATA[System Log]]></name>
+                        <model>groove_hubshoply/diagnostic_log</model>
+                    </log>
                 </tests>
             </diagnostic>
         </hubshoply>
@@ -245,6 +256,14 @@
     </frontend>
     <crontab>
         <jobs>
+            <hubshoply_clean_log>
+                <schedule>
+                    <cron_expr>0 0 * * *</cron_expr>
+                </schedule>
+                <run>
+                    <model>groove_hubshoply/cron_log::clean</model>
+                </run>
+            </hubshoply_clean_log>
             <hubshoply_token_expire>
                 <schedule>
                     <cron_expr>*/30 * * * *</cron_expr>

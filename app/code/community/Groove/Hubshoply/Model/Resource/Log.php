@@ -1,12 +1,11 @@
-<?xml version="1.0"?>
-<!--
+<?php
 
 /**
  * HubShop.ly Magento
  * 
- * Admin ACL configuration.
+ * Log resource model.
  * 
- * @category  Configuration
+ * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
  * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
@@ -35,28 +34,26 @@
  * SOFTWARE.
  */
 
--->
-<config>
-    <acl>
-        <resources>
-            <admin>
-                <children>
-                    <system>
-                        <children>
-                            <config>
-                                <children>
-                                    <hubshoply translate="title" module="groove_hubshoply">
-                                        <title><![CDATA[HubShop.ly]]></title>
-                                    </hubshoply>
-                                    <hubshoply_log translate="title" module="groove_hubshoply">
-                                        <title><![CDATA[HubShop.ly Log View]]></title>
-                                    </hubshoply_log>
-                                </children>
-                            </config>
-                        </children>
-                    </system>
-                </children>
-            </admin>
-        </resources>
-    </acl>
-</config>
+/**
+ * Class declaration
+ *
+ * @category Class_Type_Model
+ * @package  Groove_Hubshoply
+ * @author   Groove Commerce
+ */
+
+class Groove_Hubshoply_Model_Resource_Log
+    extends Mage_Core_Model_Resource_Db_Abstract
+{
+
+    /**
+     * Local constructor.
+     * 
+     * @return void
+     */
+    protected function _construct()
+    {
+        $this->_init('groove_hubshoply/log', 'log_id');
+    }
+
+}

@@ -130,44 +130,50 @@ class Groove_Hubshoply_QueueController
      */
     public function viewAction()
     {
-        $this->_checkAuthorization();
+        try {
+            $this->_checkAuthorization();
 
-        $request    = $this->getRequest();
-        $collection = Mage::getResourceModel('groove_hubshoply/queueitem_collection');
+            $request    = $this->getRequest();
+            $collection = Mage::getResourceModel('groove_hubshoply/queueitem_collection');
+            
+            if ($request->getParam('first')) {
+                $collection
+                    ->setOrder('created_at', 'ASC')
+                    ->setPageSize($request->getParam('first'));
+            } else if ($request->getParam('last')) {
+                $collection
+                    ->setOrder('created_at', 'DESC')
+                    ->setPageSize($request->getParam('last'));
+            } else if ($limit = $request->getParam('limit')) {
+                $limit = explode(',', $limit);
+                $collection->setOrder('created_at', 'ASC');
 
-        if ($request->getParam('first')) {
-            $collection
-                ->setOrder('created_at', 'ASC')
-                ->setPageSize($request->getParam('first'));
-        } else if ($request->getParam('last')) {
-            $collection
-                ->setOrder('created_at', 'DESC')
-                ->setPageSize($request->getParam('last'));
-        } else if ($limit = $request->getParam('limit')) {
-            $limit = explode(',', $limit);
-            $collection->setOrder('created_at', 'ASC');
+                $collection->getSelect()->limit($limit[1], $limit[0]);
+            }
 
-            $collection->getSelect()->limit($limit[1], $limit[0]);
+            if ($request->getParam('type')) {
+                $collection->addFieldToFilter('event_type', $request->getParam('type'));
+            }
+
+            if ($request->getParam('entity')) {
+                $collection->addFieldToFilter('event_entity', $request->getParam('entity'));
+            }
+
+            if ($request->getParam('store')) {
+                $collection->addFieldToFilter('store_id', $request->getParam('store'));
+            }
+            
+            $this->_queueCarts();
+
+            $this->getResponse()
+                ->setHeader('Content-Type', 'application/json')
+                ->setBody($collection->getQueueCollectionJson())
+                ->sendResponse();
+        } catch (Exception $error) {
+            Mage::helper('groove_hubshoply/debug')->logException($error);
+
+            $this->_errorBody(500, 'Failed to process view request', $error->getMessage(), null);
         }
-
-        if ($request->getParam('type')) {
-            $collection->addFieldToFilter('event_type', $request->getParam('type'));
-        }
-
-        if ($request->getParam('entity')) {
-            $collection->addFieldToFilter('event_entity', $request->getParam('entity'));
-        }
-
-        if ($request->getParam('store')) {
-            $collection->addFieldToFilter('store_id', $request->getParam('store'));
-        }
-        
-        $this->_queueCarts();
-
-        $this->getResponse()
-            ->setHeader('Content-Type', 'application/json')
-            ->setBody($collection->getQueueCollectionJson())
-            ->sendResponse();
     }
 
     /**
@@ -254,6 +260,41 @@ class Groove_Hubshoply_QueueController
     {
         return strcasecmp($this->getRequest()->getMethod(), $method) == 0 ;
     }
+
+    /**
+     * Creates a JSON Error message to throw, and sets appropriate response headers.
+     * Then sends response and terminates any further controller actions.
+     *
+     * @param int|string $code          HTTP Error Code
+     * @param string $message           HTTP Error Message
+     * @param string $details           Details about error
+     * @param null|callable $callback   Optional Callback to apply to response
+     *
+     * @throws Zend_Controller_Response_Exception
+     */
+    private function _errorBody($code,$message,$details, $callback = null)
+    {
+        //Response message
+        $response = array(
+            'error_code' => $code,
+            'error_message' => $message,
+            'error_details' => $details
+        );
+        //format as JSON
+        $response = json_encode($response);
+        //Set code and Response body
+        $this->getResponse()->setHttpResponseCode($code);
+        $this->getResponse()->setBody($response);
+        //Additional response actions if needed
+        if(is_callable($callback))
+        {
+            $callback($this->getResponse());
+        }
+        //Send response and terminate controller actions
+        $this->getResponse()->sendResponse();
+        exit;
+    }
+
     /**
      * Creates a JSON Error message to throw, and sets appropriate response headers.
      * Then sends response and terminates any further controller actions.
@@ -364,7 +405,7 @@ class Groove_Hubshoply_QueueController
      */
     private function _queueCarts()
     {
-        Mage::getModel('groove_hubshoply/event')->abandonCartProcessing(null);
+        Mage::getModel('groove_hubshoply/event')->abandonCartProcessing(new Varien_Event_Observer());
     }
     
 }

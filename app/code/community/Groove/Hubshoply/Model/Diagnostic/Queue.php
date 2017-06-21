@@ -1,12 +1,11 @@
-<?xml version="1.0"?>
-<!--
+<?php
 
 /**
- * HubShop.ly Magento
+ * Queue diagnostic program.
  * 
- * Admin ACL configuration.
+ * PHP Version 5
  * 
- * @category  Configuration
+ * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
  * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
@@ -35,28 +34,49 @@
  * SOFTWARE.
  */
 
--->
-<config>
-    <acl>
-        <resources>
-            <admin>
-                <children>
-                    <system>
-                        <children>
-                            <config>
-                                <children>
-                                    <hubshoply translate="title" module="groove_hubshoply">
-                                        <title><![CDATA[HubShop.ly]]></title>
-                                    </hubshoply>
-                                    <hubshoply_log translate="title" module="groove_hubshoply">
-                                        <title><![CDATA[HubShop.ly Log View]]></title>
-                                    </hubshoply_log>
-                                </children>
-                            </config>
-                        </children>
-                    </system>
-                </children>
-            </admin>
-        </resources>
-    </acl>
-</config>
+/**
+ * Class declaration
+ *
+ * @category Class_Type_Model
+ * @package  Groove_Hubshoply
+ * @author   Groove Commerce
+ */
+
+class Groove_Hubshoply_Model_Diagnostic_Queue
+    implements Groove_Hubshoply_Model_Diagnostic_Interface
+{
+
+    /**
+     * Return dependencies.
+     * 
+     * @return array
+     */
+    public function getDependencies()
+    {
+        return array(
+            'enabled'   => self::STATUS_PASS,
+            'siteid'    => self::STATUS_PASS, // By the time tracking is available, queue should have data
+        );
+    }
+
+    /**
+     * Determine whether the feature is enabled.
+     *
+     * @param Varien_Object $object The item to diagnose.
+     * 
+     * @return void
+     */
+    public function run(Varien_Object $object)
+    {
+        $collection = Mage::getResourceModel('groove_hubshopy/queueitem_collection');
+
+        if ( $collection->getSize() > 0 ) {
+            $object->setStatus(self::STATUS_PASS)
+                ->setDetails(sprintf('Currently %d items in the queue.', $collection->getSize()));
+        } else {
+            $object->setStatus(self::STATUS_WARN)
+                ->setDetails('No items in the queue.');
+        }
+    }
+
+}

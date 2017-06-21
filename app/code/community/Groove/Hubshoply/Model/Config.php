@@ -48,6 +48,7 @@ class Groove_Hubshoply_Model_Config
     extends Mage_Core_Model_Abstract
 {
 
+    const LOG_ENTRY_LIFETIME                = 604800;
     const OAUTH_CONSUMER                    = 'HubShop.ly';
     const REMOTE_AUTH_URL                   = 'https://magento.hubshop.ly/auth/magento';
     const REMOTE_TEST_AUTH_URL              = 'https://hubshoply-magento-staging.herokuapp.com/auth/magento';

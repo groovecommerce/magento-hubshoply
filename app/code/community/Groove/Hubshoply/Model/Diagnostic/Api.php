@@ -74,7 +74,7 @@ class Groove_Hubshoply_Model_Diagnostic_Api
             $http->addOption(CURLOPT_FOLLOWLOCATION, true);
         }
 
-        $http->write('GET', $url, null, '');
+        $http->write('GET', $url);
 
         $response = $http->read();
 
@@ -84,6 +84,57 @@ class Groove_Hubshoply_Model_Diagnostic_Api
             Zend_Http_Response::extractCode($response),
             ( $asRedirectTest ? array(301, 302) : array(200) )
         );
+    }
+
+    /**
+     * Determine whether the proprietary HubShop.ly API endpoint is accessible.
+     * 
+     * @return boolean
+     */
+    private function _checkHubshoplyAuthorizationEndpoint()
+    {
+        $http = new Varien_Http_Adapter_Curl();
+        $url  = Mage::getSingleton('groove_hubshoply/config')->getFrontendUrl('hubshoply/queue/authenticate');
+
+        $http->addOption(CURLOPT_NOBODY, true);
+
+        $http->write('GET', $url);
+
+        $response = $http->read();
+
+        $http->close();
+
+        return Zend_Http_Response::extractCode($response) === 200;
+    }
+
+    /**
+     * Generate a one-time use HubShop.ly token for this test.
+     *
+     * - Uses an existing authorized token if available.
+     * - Autogenerates a new pre-authorized token if needed.
+     *
+     * @param Mage_Oauth_Model_Consumer $consumer The consumer model.
+     * 
+     * @return Groove_Hubshoply_Model_Token
+     */
+    private function _generateHubshoplyToken(Mage_Oauth_Model_Consumer $consumer)
+    {
+        $collection = Mage::getResourceModel('groove_hubshoply/token_collection')
+            ->addFieldToFilter('consumer_id', $consumer->getId())
+            ->addFieldToFilter('expires', array('lt' => now()));
+
+        if (!$collection->getSize()) {
+            $token = Mage::getModel('groove_hubshoply/token')
+                ->setConsumerId($consumer->getId())
+                ->setToken(Mage::helper('oauth')->generateToken())
+                ->setExpires(Groove_Hubshoply_Model_Token::DAY)
+                ->setIsTemporary(true)
+                ->save();
+        } else {
+            $token = $collection->getFirstItem();
+        }
+
+        return $token;
     }
 
     /**
@@ -99,7 +150,6 @@ class Groove_Hubshoply_Model_Diagnostic_Api
     private function _generateToken(Mage_Oauth_Model_Consumer $consumer)
     {
         $user       = Mage::getSingleton('admin/session')->getUser();
-        $helper     = Mage::helper('oauth');
         $collection = Mage::getResourceModel('oauth/token_collection')
             ->addFieldToFilter('authorized', 1)
             ->addFilterByConsumerId($consumer->getId())
@@ -156,6 +206,30 @@ class Groove_Hubshoply_Model_Diagnostic_Api
     }
 
     /**
+     * Test the HubShop.ly queue API.
+     * 
+     * @param Mage_Oauth_Model_Consumer $consumer The consumer model.
+     * @param Mage_Oauth_Model_Token    $token    The authorized Magento token.
+     * 
+     * @return boolean
+     */
+    private function _testHubshoplyQueueApi(Mage_Oauth_Model_Consumer $consumer, Groove_Hubshoply_Model_Token $token)
+    {
+        $http       = new Varien_Http_Adapter_Curl();
+        $headers    = array("X-Access-Token: {$token->getToken()}");
+        $url        = Mage::getSingleton('groove_hubshoply/config')
+            ->getFrontendUrl('hubshoply/queue/view', array('first' => 1));
+
+        $http->write('GET', $url, null, $headers);
+
+        $response = $http->read();
+
+        $http->close();
+        
+        return Zend_Http_Response::extractCode($response) === 200;
+    }
+
+    /**
      * Test the products REST API.
      * 
      * @param Mage_Oauth_Model_Consumer $consumer The consumer model.
@@ -203,11 +277,16 @@ class Groove_Hubshoply_Model_Diagnostic_Api
      */
     public function run(Varien_Object $object)
     {
+        $skipHubshoplyEndpointTest = false;
+
         $object->setStatus(self::STATUS_PASS);
 
         if ($this->_checkOauthAuthorizationEndpoint(null, true)) {
             $object->setStatus(self::STATUS_WARN)
                 ->setDetails('Encountered redirect on authorization endpoint.');
+
+            // Skip to allow this warning to have greater severity
+            $skipHubshoplyEndpointTest = true;
         } else if (!$this->_checkOauthAuthorizationEndpoint(false)) {
             $object->setStatus(self::STATUS_FAIL)
                 ->setDetails('Authorization endpoint could not be reached.');
@@ -218,6 +297,11 @@ class Groove_Hubshoply_Model_Diagnostic_Api
                 ->setDetails('SSL peer verification failed on authorization endpoint.');
 
             return;
+        }
+
+        if ( !$skipHubshoplyEndpointTest && !$this->_checkHubshoplyAuthorizationEndpoint() ) {
+            $object->setStatus(self::STATUS_FAIL)
+                ->setDetails('HubShop.ly queue endpoint could not be reached.');
         }
 
         try {
@@ -255,6 +339,32 @@ class Groove_Hubshoply_Model_Diagnostic_Api
 
         if ($token->getIsTemporary()) {
             $token->delete();
+        }
+
+        if ( $object->getStatus() === self::STATUS_FAIL ) {
+            return;
+        }
+        try {
+            $hubshoplyToken = $this->_generateHubshoplyToken($consumer);
+        } catch (Mage_Core_Exception $error) {
+            $object->setStatus(self::STATUS_FAIL)
+                ->setDetails(sprintf('HubShop.ly token validation error: %s', $error->getMessage()));
+
+            return;
+        } catch (Exception $error) {
+            $object->setStatus(self::STATUS_FAIL)
+                ->setDetails(sprintf('Internal server error on HubShop.ly token validation: %s', $error->getMessage()));
+
+            return;
+        }
+
+        if (!$this->_testHubshoplyQueueApi($consumer, $hubshoplyToken)) {
+            $object->setStatus(self::STATUS_FAIL)
+                ->setDetails('HubShop.ly queue test did not succeed.');
+        }
+
+        if ($hubshoplyToken->getIsTemporary()) {
+            $hubshoplyToken->delete();
         }
     }
 

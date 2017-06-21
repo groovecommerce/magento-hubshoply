@@ -1,12 +1,11 @@
-<?xml version="1.0"?>
-<!--
+<?php
 
 /**
  * HubShop.ly Magento
  * 
- * Admin ACL configuration.
+ * Debug helper.
  * 
- * @category  Configuration
+ * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
  * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
@@ -35,28 +34,52 @@
  * SOFTWARE.
  */
 
--->
-<config>
-    <acl>
-        <resources>
-            <admin>
-                <children>
-                    <system>
-                        <children>
-                            <config>
-                                <children>
-                                    <hubshoply translate="title" module="groove_hubshoply">
-                                        <title><![CDATA[HubShop.ly]]></title>
-                                    </hubshoply>
-                                    <hubshoply_log translate="title" module="groove_hubshoply">
-                                        <title><![CDATA[HubShop.ly Log View]]></title>
-                                    </hubshoply_log>
-                                </children>
-                            </config>
-                        </children>
-                    </system>
-                </children>
-            </admin>
-        </resources>
-    </acl>
-</config>
+/**
+ * Class declaration
+ *
+ * @category Class_Type_Helper
+ * @package  Groove_Hubshoply
+ * @author   Groove Commerce
+ */
+ 
+class Groove_Hubshoply_Helper_Debug
+    extends Mage_Core_Helper_Abstract
+{
+
+    /**
+     * Create a new log entry.
+     * 
+     * @param string  $message The data to log.
+     * @param integer $level   Optional log level.
+     * 
+     * @return Groove_Hubshoply_Helper_Debug
+     */
+    public function log($message, $level = Zend_Log::DEBUG)
+    {
+        try {
+            Mage::getModel('groove_hubshoply/log')
+                ->setMessage($message)
+                ->setLevel($level)
+                ->save();
+        } catch (Exception $error) {
+            Mage::logException($error);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Log an exception.
+     * 
+     * @param Exception $error The exception thrown.
+     * 
+     * @return Groove_Hubshoply_Helper_Debug
+     */
+    public function logException(Exception $error)
+    {
+        $this->log($error->getMessage(), Zend_Log::ERR);
+
+        return $this;
+    }
+
+}

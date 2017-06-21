@@ -75,7 +75,8 @@
 
 }
 
-#hubshoply_support .form-list {
+#hubshoply_support .form-list,
+#hubshoply_log_view .form-list {
     width: 100%;
 }
 
