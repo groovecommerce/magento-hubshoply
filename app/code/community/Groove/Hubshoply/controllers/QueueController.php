@@ -291,6 +291,8 @@ class Groove_Hubshoply_QueueController
                 ->setHeader('Content-Type', 'application/json')
                 ->setBody($collection->getQueueCollectionJson())
                 ->sendResponse();
+
+            exit;
         } catch (Exception $error) {
             Mage::helper('groove_hubshoply/debug')->logException($error);
 
@@ -341,6 +343,8 @@ class Groove_Hubshoply_QueueController
                     'URI needs to be in the format [hubshoply/mark/id/###] for single deletions or [hubshoply/mark/from/###/to/###].'
                 );
             }
+
+            exit;
         } catch (Exception $error) {
             Mage::helper('groove_hubshoply/debug')->logException($error);
 
