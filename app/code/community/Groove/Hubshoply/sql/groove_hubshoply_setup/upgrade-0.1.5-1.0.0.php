@@ -97,12 +97,30 @@ $installer->getConnection()->createTable($logTable);
  * Upgrade the consumer.
  */
 
-$consumer = $this->setupConsumer(Mage_Core_Model_App::ADMIN_STORE_ID);
+$storeId    = resolve_store_id();
+$consumer   = $this->setupConsumer($storeId);
 
 if ($consumer->getWasUpgraded()) {
-    $this->enableFeatures(
-        Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId()
-    );
+    $this->enableFeatures($storeId);
 }
 
 $installer->endSetup();
+
+/**
+ * Locate the single store likely used in the previous version.
+ * 
+ * @return integer
+ */
+function resolve_store_id() {
+    $queueItem = Mage::getResourceModel('groove_hubshoply/queueitem_collection')
+        ->addFieldToFilter('store_id', array('neq' => 0))
+        ->addFieldToFilter('store_id', array('notnull' => true))
+        ->setPageSize(1)
+        ->getFirstItem();
+
+    if (!$queueItem->getStoreId()) {
+        return $queueItem->getStoreId();
+    }
+
+    return Mage_Core_Model_App::ADMIN_STORE_ID;
+}
