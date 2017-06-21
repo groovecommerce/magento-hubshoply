@@ -39,9 +39,8 @@
 <config>
     <tabs>
         <hubshoply translate="title label" module="groove_hubshoply">
-            <title><![CDATA[HubShop.ly]]></title>
-            <label><![CDATA[HubShop.ly]]></label>>
-            <sort_order>750</sort_order>
+            <label><![CDATA[HubShop.ly for Magento]]></label>>
+            <sort_order>100</sort_order>
         </hubshoply>
     </tabs>
     <sections>
