@@ -209,11 +209,11 @@ class Groove_Hubshoply_QueueController
                 ->setBody(Mage::helper('core')->jsonEncode($response))
                 ->sendResponse();
         } catch (Mage_Oauth_Exception $error) {
-            Mage::helper('groove_hubshoply/debug')->logError($error);
+            Mage::helper('groove_hubshoply/debug')->logException($error);
 
             $this->_sendError($error->getCode(), 'OAuth Exception', $error->getMessage());
         } catch (Exception $error) {
-            Mage::helper('groove_hubshoply/debug')->logError($error);
+            Mage::helper('groove_hubshoply/debug')->logException($error);
 
             $this->_sendError(500, 'Server Error', 'Exception thrown while authenticating this request.');
         }
