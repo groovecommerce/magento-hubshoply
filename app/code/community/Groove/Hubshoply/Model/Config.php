@@ -287,6 +287,8 @@ class Groove_Hubshoply_Model_Config
             $customUrl['path'] = $customUrl['path'] . str_replace($customUrl['path'], '', $urlData['path']);
         }
 
+        $urlData['path'] .= '/';
+
         $this->_adjustFrontendUrlScheme($urlData);
 
         // @see bundled functions.php for polyfill
