@@ -199,6 +199,11 @@ class Groove_Hubshoply_Model_Resource_Setup
         Mage::helper('groove_hubshoply/oauth')
             ->getConsumer(null, true, $storeId)
             ->delete();
+
+        $this->getConnection('core_write')
+            ->truncateTable($this->getTable('groove_hubshoply/queueitem'))
+            ->truncateTable($this->getTable('groove_hubshoply/token'))
+            ->truncateTable($this->getTable('groove_hubshoply/log'));
     }
 
     /**
