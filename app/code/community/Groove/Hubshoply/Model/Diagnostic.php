@@ -231,11 +231,11 @@ class Groove_Hubshoply_Model_Diagnostic
             $test->setFinishedAt(now());
         }
 
-        $this->_afterRun($tests);
-
         if ($environment) {
             Mage::getSingleton('core/app_emulation')->stopEnvironmentEmulation($environment);
         }
+
+        $this->_afterRun($tests);
 
         return $tests;
     }
@@ -248,13 +248,18 @@ class Groove_Hubshoply_Model_Diagnostic
     public function exportJson(Varien_Data_Collection $results)
     {
         $user   = Mage::getSingleton('admin/session')->getUser();
+        $logs   = Mage::getResourceModel('groove_hubshoply/log_collection')
+            ->setPageSize(10)
+            ->setOrder('created_at', 'DESC')
+            ->toArray();
         $output = array(
             'exported_at'   => now(),
             'requestor'     => ( $user && $user->getId() ) ? $user->getId() : null,
             'environment'   => Mage::app()->getRequest()->getEnv(),
             'server'        => Mage::app()->getRequest()->getServer(),
-            'configuration' => Mage::getStoreConfig('hubshoply'),
             'modules'       => Mage::getConfig()->getNode('modules')->asArray(),
+            'configuration' => Mage::getStoreConfig('hubshoply'),
+            'recent_log'    => $logs['items'],
             'test_results'  => array(),
         );
 
