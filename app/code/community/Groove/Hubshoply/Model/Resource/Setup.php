@@ -87,6 +87,27 @@ class Groove_Hubshoply_Model_Resource_Setup
     }
 
     /**
+     * Configure the associated REST attribute.
+     * 
+     * @return Mage_Api2_Model_Acl_Filter_Attribute
+     */
+    public function provisionAttribute()
+    {
+        $attribute = Mage::getModel('api2/acl_filter_attribute')
+            ->setUserType(Mage_Api2_Model_Acl_Global_Role::ROLE_CONFIG_NODE_NAME_ADMIN);
+
+        $collection = $attribute->getCollection()
+            ->addFilterByUserType(Mage_Api2_Model_Acl_Global_Role::ROLE_CONFIG_NODE_NAME_ADMIN);
+
+        foreach ($collection as $model) {
+            $model->delete();
+        }
+
+        $attribute->setResourceId(Mage_Api2_Model_Acl_Global_Rule::RESOURCE_ALL)
+            ->save();
+    }
+
+    /**
      * Install an admin role for REST setup.
      * 
      * @return Mage_Api2_Model_Acl_Global_Role
@@ -166,6 +187,8 @@ class Groove_Hubshoply_Model_Resource_Setup
 
         $role = $this->provisionRole();
 
+        $this->provisionAttribute();
+
         $this->assignUserToRole($user->getId(), $role->getId());
 
         $this->setupConsumer($storeId);
@@ -188,6 +211,10 @@ class Groove_Hubshoply_Model_Resource_Setup
 
         Mage::getResourceModel('oauth/consumer_collection')
             ->addFieldToFilter('name', array('like' => Groove_Hubshoply_Model_Config::OAUTH_CONSUMER . '%'))
+            ->walk('delete');
+
+        Mage::getResourceModel('api2/acl_global_role_collection')
+            ->addFieldToFilter('role_name', Groove_Hubshoply_Model_Config::ROLE_NAME)
             ->walk('delete');
 
         $this->getConnection('core_write')
