@@ -291,7 +291,7 @@ class Groove_Hubshoply_Model_Config
      */
     public function getFrontendUrl($route = '', array $params = array(), $storeId = null)
     {
-        $urlData    = parse_url(Mage::getUrl($route, $params));
+        $urlData    = parse_url(Mage::app()->getStore($storeId)->getUrl($route, $params));
         $customUrl  = parse_url(Mage::getStoreConfig(self::XML_CONFIG_PATH_FRONTEND_URL, $storeId));
 
         // REST API rewrite compatibility fix
