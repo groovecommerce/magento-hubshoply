@@ -65,7 +65,7 @@ class Groove_Hubshoply_QueueController
             );
         } else if (!$this->_isStoreEnabled()) {
             $this->_sendError(
-                '503',
+                503,
                 'Service Unavailable',
                 'The HubShop.ly service is not currently enabled for this shop.'
             );
