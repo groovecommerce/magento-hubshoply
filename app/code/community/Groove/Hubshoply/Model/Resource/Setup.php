@@ -75,7 +75,7 @@ class Groove_Hubshoply_Model_Resource_Setup
 
         if (!$storeId) {
             $scope      = 'default';
-            $storeId    = null;
+            $storeId    = 0;
         }
 
         Mage::getConfig()
