@@ -230,8 +230,6 @@ class Groove_Hubshoply_Model_Resource_Setup
                 ->save();
         } else if (!$consumer->getId()) {
             $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(null, true, $storeId);
-        } else {
-            throw new Groove_Hubshoply_SetupException('Failed to locate or create consumer.');
         }
 
         return $consumer;
