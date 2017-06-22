@@ -39,59 +39,61 @@ $installer = $this;
 
 $installer->startSetup();
 
-$logTable = $installer->getConnection()
-    ->newTable($installer->getTable('groove_hubshoply/log'))
-    ->addColumn(
-        'log_id',
-        Varien_Db_Ddl_Table::TYPE_INTEGER,
-        null,
-        array(
-            'identity'  => true,
-            'unsigned'  => true,
-            'nullable'  => false,
-            'primary'   => true,
-        ),
-        'Record entity ID'
-    )
-    ->addColumn(
-        'store_id',
-        Varien_Db_Ddl_Table::TYPE_INTEGER,
-        null,
-        array(
-            'nullable' => true,
-        ),
-        'Record store ID'
-    )
-    ->addColumn(
-        'created_at',
-        Varien_Db_Ddl_Table::TYPE_TIMESTAMP,
-        null,
-        array(
-            'nullable'  => false,
-            'default'   => Varien_Db_Ddl_Table::TIMESTAMP_INIT,
-        ),
-        'Record entry timestamp'
-    )
-    ->addColumn(
-        'level',
-        Varien_Db_Ddl_Table::TYPE_INTEGER,
-        null,
-        array(
-            'nullable' => true,
-        ),
-        'Record log level'
-    )
-    ->addColumn(
-        'message',
-        Varien_Db_Ddl_Table::TYPE_TEXT,
-        null,
-        array(
-            'nullable'  => false,
-        ),
-        'Record data'
-    );
+if (!$this->tableExists('groove_hubshoply/log')) {
+    $logTable = $installer->getConnection()
+        ->newTable($installer->getTable('groove_hubshoply/log'))
+        ->addColumn(
+            'log_id',
+            Varien_Db_Ddl_Table::TYPE_INTEGER,
+            null,
+            array(
+                'identity'  => true,
+                'unsigned'  => true,
+                'nullable'  => false,
+                'primary'   => true,
+            ),
+            'Record entity ID'
+        )
+        ->addColumn(
+            'store_id',
+            Varien_Db_Ddl_Table::TYPE_INTEGER,
+            null,
+            array(
+                'nullable' => true,
+            ),
+            'Record store ID'
+        )
+        ->addColumn(
+            'created_at',
+            Varien_Db_Ddl_Table::TYPE_TIMESTAMP,
+            null,
+            array(
+                'nullable'  => false,
+                'default'   => Varien_Db_Ddl_Table::TIMESTAMP_INIT,
+            ),
+            'Record entry timestamp'
+        )
+        ->addColumn(
+            'level',
+            Varien_Db_Ddl_Table::TYPE_INTEGER,
+            null,
+            array(
+                'nullable' => true,
+            ),
+            'Record log level'
+        )
+        ->addColumn(
+            'message',
+            Varien_Db_Ddl_Table::TYPE_TEXT,
+            null,
+            array(
+                'nullable'  => false,
+            ),
+            'Record data'
+        );
 
-$installer->getConnection()->createTable($logTable);
+    $installer->getConnection()->createTable($logTable);
+}
 
 /**
  * Upgrade the consumer.
