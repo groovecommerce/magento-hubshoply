@@ -150,6 +150,10 @@ class Groove_Hubshoply_Helper_Cron
      */
     public function trackAbandonCart(Mage_Sales_Model_Quote $quote)
     {
+        if ( !Mage::getSingleton('groove_hubshoply/config')->isEnabled($quote->getStoreId()) ) {
+            return;
+        }
+
         //get abandoned cart for quote, or a new one if it doesn't exist
         $cart = Mage::getModel('groove_hubshoply/abandonedcart')
             ->loadByQuoteStore($quote->getId(),$quote->getStoreId());

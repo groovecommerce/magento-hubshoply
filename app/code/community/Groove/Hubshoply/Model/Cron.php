@@ -45,6 +45,9 @@
 class Groove_Hubshoply_Model_Cron
 {
 
+    /* @var $_activeStores array */
+    private $_activeStores;
+
     /* @var $_debug Groove_Hubshoply_Helper_Debug */
     private $_debug;
 
@@ -55,32 +58,57 @@ class Groove_Hubshoply_Model_Cron
      */
     public function __construct()
     {
-        $this->_debug = Mage::helper('groove_hubshoply/debug');
+        $this->_debug           = Mage::helper('groove_hubshoply/debug');
+        $this->_activeStores    = Mage::getSingleton('groove_hubshoply/config')->getActiveStores();
+    }
+
+    /**
+     * Determine whether the scheduled task can run.
+     * 
+     * @param Mage_Cron_Model_Schedule $schedule The scheduled task.
+     * 
+     * @return boolean
+     */
+    private function _canRun(Mage_Cron_Model_Schedule $schedule)
+    {
+        return empty($this->_activeStores) ? false : true;
     }
 
     /**
      * Removes expired auth tokens.
+     *
+     * @see hubshoply_token_expire
      * 
-     * @param Mage_Cron_Model_Schedule $schedule
+     * @param Mage_Cron_Model_Schedule $schedule The scheduled task.
      *
      * @return void
      */
     public function pruneExpiredTokens(Mage_Cron_Model_Schedule $schedule)
     {
+        if (!$this->_canRun($schedule)) {
+            return;
+        }
+
         $total = Mage::helper('groove_hubshoply/cron')->pruneExpiredTokens();
 
         $this->_debug->log(sprintf('Pruned %d expired tokens.', $total), Zend_Log::INFO);
     }
 
     /**
-     * Removes "stale" queue items, similar to log rotation
+     * Remove stale queue items.
+     *
+     * @see hubshoply_queue_expire
      * 
-     * @param Mage_Cron_Model_Schedule $schedule
+     * @param Mage_Cron_Model_Schedule $schedule The scheduled task.
      *
      * @return void
      */
     public function pruneStaleQueueitems(Mage_Cron_Model_Schedule $schedule)
     {
+        if (!$this->_canRun($schedule)) {
+            return;
+        }
+
         $jobCode    = $schedule->getJobCode();
         $length     = (string) $this->getJobConfig($jobCode, 'stale_length_in_days');
 
@@ -91,13 +119,19 @@ class Groove_Hubshoply_Model_Cron
 
     /**
      * Finds abandoned carts to add to queue
+     *
+     * @see hubshoply_abandon_cart_scan
      * 
-     * @param Mage_Cron_Model_Schedule $schedule
+     * @param Mage_Cron_Model_Schedule $schedule The scheduled task.
      *
      * @return void
      */
     public function findAbandonCarts(Mage_Cron_Model_Schedule $schedule)
     {
+        if (!$this->_canRun($schedule)) {
+            return;
+        }
+
         $jobCode    = $schedule->getJobCode();
         $length     = (string)$this->getJobConfig($jobCode, 'minutes_until_abandoned');
 

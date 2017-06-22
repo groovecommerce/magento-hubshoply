@@ -215,6 +215,26 @@ class Groove_Hubshoply_Model_Config
     }
 
     /**
+     * Get a collection of HubShop.ly-enabled stores.
+     * 
+     * @param boolean $withDefault Optional flag to force-include the admin store view.
+     * 
+     * @return array
+     */
+    public function getActiveStores($withDefault = false)
+    {
+        $stores = array();
+
+        foreach (Mage::app()->getStores($withDefault) as $store) {
+            if ($this->isEnabled($store->getId())) {
+                $stores[$store->getId()] = $store;
+            }
+        }
+
+        return $stores;
+    }
+
+    /**
      * Generate a remote callback-safe admin URL.
      *
      * @param string  $route   The target admin route.

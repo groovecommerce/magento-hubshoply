@@ -47,6 +47,9 @@ class Groove_Hubshoply_Model_Event
 
     const EVENT_CONTROL_LOG = 'hubshoply_event_observer.log';
 
+    /* @var $_activeStores array */
+    private $_activeStores;
+
     /* @var $_debug Groove_Hubshoply_Helper_Debug */
     private $_debug;
 
@@ -57,7 +60,26 @@ class Groove_Hubshoply_Model_Event
      */
     public function __construct()
     {
-        $this->_debug = Mage::helper('groove_hubshoply/debug');
+        $this->_debug           = Mage::helper('groove_hubshoply/debug');
+        $this->_activeStores    = Mage::getSingleton('groove_hubshoply/config')->getActiveStores();
+    }
+
+    /**
+     * Determine whether the event observed is actionable.
+     * 
+     * @param Varien_Event_Observer $observer The event details.
+     * 
+     * @return boolean
+     */
+    private function _canObserve(Varien_Event_Observer $observer)
+    {
+        if (empty($this->_activeStores)) {
+            return false;
+        }
+
+        $storeId = Mage::app()->getStore()->getId();
+
+        return empty($this->_activeStores[$storeId]) ? false : true;
     }
 
     /**
@@ -69,6 +91,10 @@ class Groove_Hubshoply_Model_Event
      */
     public function createAccount(Varien_Event_Observer $observer)
     {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         /* @var Mage_Customer_Model_Customer $customer */
         $customer   = $observer->getEvent()->getCustomer();
         $group      = Mage::getModel('customer/group')->load($customer->getGroupId());
@@ -99,6 +125,10 @@ class Groove_Hubshoply_Model_Event
      */
     public function createNewsletterAccount(Varien_Event_Observer $observer)
     {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         $changed    = $observer->getEvent()->getDataObject()->getIsStatusChanged();
         $subscribed = $observer->getEvent()->getDataObject()->getStatus();
 
@@ -127,6 +157,10 @@ class Groove_Hubshoply_Model_Event
      */
     public function createReview(Varien_Event_Observer $observer)
     {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         $review = $observer->getEvent()->getDataObject();
 
         $this->_addToQueue(
@@ -157,6 +191,10 @@ class Groove_Hubshoply_Model_Event
      */
     public function abandonCartProcessing(Varien_Event_Observer $observer)
     {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         $carts = Mage::getModel('groove_hubshoply/abandonedcart')
             ->getCollection()
             ->addFieldToFilter('enqueued', false);
@@ -195,6 +233,10 @@ class Groove_Hubshoply_Model_Event
      */
     public function saveOrderBefore(Varien_Event_Observer $observer)
     {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         /* @var Mage_Sales_Model_Order $order */
         $order = $observer->getEvent()->getDataObject();
 
@@ -212,6 +254,10 @@ class Groove_Hubshoply_Model_Event
      */
     public function saveOrderAfter(Varien_Event_Observer $observer)
     {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         /* @var Mage_Sales_Model_Order $order */
         $order = $observer->getEvent()->getDataObject();
 
@@ -248,6 +294,10 @@ class Groove_Hubshoply_Model_Event
      */
     public function saveShipment(Varien_Event_Observer $observer)
     {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         /* @var Mage_Sales_Model_Order_Shipment $shipment */
         $shipment   = $observer->getEvent()->getDataObject();
         $email      = $shipment->getOrder()->getCustomerEmail();
@@ -285,6 +335,10 @@ class Groove_Hubshoply_Model_Event
      */
     public function updateCustomer(Varien_Event_Observer $observer)
     {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         /* @var Mage_Customer_Model_Customer $customer */
         $customer   = $observer->getEvent()->getCustomer();
         $group      = Mage::getModel('customer/group')->load($customer->getGroupId());
@@ -358,6 +412,10 @@ class Groove_Hubshoply_Model_Event
      */
     public function registerOrderForTracking(Varien_Event_Observer $observer)
     {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         try {
             $order      = Mage::getModel('sales/order');
             $orderId    = current( ( (array) $observer->getEvent()->getOrderIds() ) );

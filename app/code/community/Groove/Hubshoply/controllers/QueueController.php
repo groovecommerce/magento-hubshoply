@@ -63,9 +63,25 @@ class Groove_Hubshoply_QueueController
                 'Your token is invalid or not present. Please re-authenticate and try again.',
                 function ($response) { $response->setHeader('WWW-Authenticate', 'Custom', true); }
             );
+        } else if (!$this->_isStoreEnabled()) {
+            $this->_sendError(
+                '503',
+                'Service Unavailable',
+                'The HubShop.ly service is not currently enabled for this shop.'
+            );
         } else {
             return $tokenModel;
         }
+    }
+
+    /**
+     * Determine whether the current store is enabled for HubShop.ly.
+     * 
+     * @return boolean
+     */
+    private function _isStoreEnabled()
+    {
+        Mage::getSingleton('groove_hubshoply/config')->isEnabled(Mage::app()->getStore()->getId());
     }
 
     /**
