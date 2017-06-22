@@ -104,6 +104,8 @@ class Groove_Hubshoply_Helper_Oauth
 
         if ($storeId === true) {
             $storeId = Mage::app()->getStore(Mage::app()->getRequest()->getParam('store'))->getId();
+        } else {
+            $storeId = Mage::app()->getStore($storeId)->getId();
         }
 
         if ( (int) $storeId > 0 ) {
