@@ -206,23 +206,38 @@ class Groove_Hubshoply_Model_Resource_Setup
      * 
      * @return Mage_Oauth_Model_Consumer
      */
-    public function setupConsumer($storeId)
+    public function setupConsumer($storeId, $name = null)
     {
-        $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(null, false, $storeId);
+        $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer($name, false, $storeId);
 
         // Upgrade consumers from pre-stable releases
         if ( $consumer->getName() === Groove_Hubshoply_Model_Config::OAUTH_CONSUMER ) {
-            $storeId = Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
-            
-            $consumer->setName( Groove_Hubshoply_Model_Config::OAUTH_CONSUMER . " #{$storeId}" )
-                ->setCallbackUrl(Mage::getSingleton('groove_hubshoply/config')->getAuthUrl($storeId))
-                ->setWasUpgraded(true)
-                ->save();
+            $this->upgradeConsumer($consumer);
         } else if (!$consumer->getId()) {
-            $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(null, true, $storeId);
+            $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer($name, true, $storeId);
         }
 
         return $consumer;
+    }
+
+    /**
+     * Upgrade the consumer name from pre-stable releases.
+     * 
+     * @param Mage_Oauth_Model_Consumer $consumer The consumer model.
+     * @param integer                   $storeId  Optional store ID.
+     * 
+     * @return void
+     */
+    public function upgradeConsumer(Mage_Oauth_Model_Consumer $consumer, $storeId = null)
+    {
+        if (!$storeId) {
+            $storeId = Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
+        }
+            
+        $consumer->setName( Groove_Hubshoply_Model_Config::OAUTH_CONSUMER . " #{$storeId}" )
+            ->setCallbackUrl(Mage::getSingleton('groove_hubshoply/config')->getAuthUrl($storeId))
+            ->setWasUpgraded(true)
+            ->save();
     }
 
 }

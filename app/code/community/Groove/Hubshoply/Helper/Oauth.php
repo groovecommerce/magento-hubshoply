@@ -109,7 +109,7 @@ class Groove_Hubshoply_Helper_Oauth
         if ( (int) $storeId > 0 ) {
             $name .= ' #' . strval($storeId);
         }
-        
+
         $consumer = Mage::getModel('oauth/consumer')->load($name, 'name');
 
         if ($consumer->getId()) {
@@ -130,8 +130,14 @@ class Groove_Hubshoply_Helper_Oauth
                 Mage::logException($error);
             }
         } else {
-            // Fallback to support older versions (single-store)
             $consumer->load(Groove_Hubshoply_Model_Config::OAUTH_CONSUMER, 'name');
+
+            // Auto-upgrade consumer if in fallback scenario
+            if ($consumer->getId()) {
+                $setup = new Groove_Hubshoply_Model_Resource_Setup('core_setup');
+
+                $setup->upgradeConsumer($consumer, $storeId);
+            }
         }
 
         return $consumer;

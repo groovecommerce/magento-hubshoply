@@ -54,8 +54,7 @@ class Groove_Hubshoply_Model_Diagnostic_Queue
     public function getDependencies()
     {
         return array(
-            'enabled'   => self::STATUS_PASS,
-            'siteid'    => self::STATUS_PASS, // By the time tracking is available, queue should have data
+            'enabled' => self::STATUS_PASS,
         );
     }
 
