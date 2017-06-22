@@ -177,36 +177,26 @@ class Groove_Hubshoply_Model_Resource_Setup
 
     /**
      * Reset installation state.
-     *
-     * @param integer $storeId The store ID for context.
      * 
      * @return Groove_Hubshoply_Model_Resource_Setup
      */
-    public function resetState($storeId = null)
+    public function resetState()
     {
-        $collection = Mage::getResourceModel('core/config_data_collection');
-        $path       = 'hubshoply';
-        $scope      = 'default';
-        $scopeId    = null;
-
-        if ( $storeId > 0 ) {
-            $scope      = 'stores';
-            $scopeId    = $storeId;
-        }
-
-        $collection->addScopeFilter($scope, $scopeId, $path)
+        Mage::getResourceModel('core/config_data_collection')
+            ->addPathFilter('hubshoply')
             ->walk('delete');
 
-        Mage::getConfig()->cleanCache();
-
-        Mage::helper('groove_hubshoply/oauth')
-            ->getConsumer(null, true, $storeId)
-            ->delete();
+        Mage::getResourceModel('oauth/consumer_collection')
+            ->addFieldToFilter('name', array('like' => Groove_Hubshoply_Model_Config::OAUTH_CONSUMER . '%'))
+            ->walk('delete');
 
         $this->getConnection('core_write')
             ->truncateTable($this->getTable('groove_hubshoply/queueitem'))
+            ->truncateTable($this->getTable('groove_hubshoply/abandonedcart'))
             ->truncateTable($this->getTable('groove_hubshoply/token'))
             ->truncateTable($this->getTable('groove_hubshoply/log'));
+
+        Mage::getConfig()->cleanCache();
     }
 
     /**

@@ -53,6 +53,9 @@ class Groove_Hubshoply_Model_Diagnostic_Api
 
     /**
      * Attempt to verify redirect rules for API access.
+     *
+     * - Expects Apache RewriteRule in stock Magento .htaccess file
+     * - Expects nginx rewrite directive in most common locations
      * 
      * @return boolean
      */
@@ -67,7 +70,18 @@ class Groove_Hubshoply_Model_Diagnostic_Api
             $contents       = @file_get_contents( rtrim(Mage::getBaseDir(), DS) . DS . '.htaccess' );
         } else if (preg_match('/nginx/im', $server)) {
             $expectedString = '~^[\s\r\n]*[^#]*rewrite\s\^/?api/rest~m';
-            $contents       = @file_get_contents('/etc/nginx/nginx.conf');
+            $contents       = '';
+            $paths          = array('/etc/nginx/nginx.conf', '/etc/nginx/conf.d/*', '/etc/nginx/sites-enabled/*');
+
+            foreach ($paths as $path) {
+                $files = (array) @glob($path);
+
+                foreach ($files as $file) {
+                    if ( is_file($file) && is_readable($file) ) {
+                        $contents .= @file_get_contents($file);
+                    }
+                }
+            }
         }
 
         return !( $contents && $expectedString && !preg_match($expectedString, $contents) );
@@ -255,6 +269,25 @@ class Groove_Hubshoply_Model_Diagnostic_Api
     }
 
     /**
+     * Try to confirm redirect rules as a possible integration problem.
+     * 
+     * @param Varien_Object $object The item to diagnose.
+     * 
+     * @return boolean
+     */
+    private function _tryRewriteRuleTest(Varien_Object $object, $status = self::STATUS_WARN)
+    {
+        if (!$this->_checkRedirectRule()) {
+            $object->setStatus($status)
+                ->setDetails('Magento API redirect rule was not found.');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Test the products REST API.
      * 
      * @param Mage_Oauth_Model_Consumer $consumer The consumer model.
@@ -306,12 +339,7 @@ class Groove_Hubshoply_Model_Diagnostic_Api
 
         $object->setStatus(self::STATUS_PASS);
 
-        if (!$this->_checkRedirectRule()) {
-            $object->setStatus(self::STATUS_WARN)
-                ->setDetails('Magento API redirect rule was not found.');
-
-            return;
-        }
+        $this->_tryRewriteRuleTest($object);
 
         if ($this->_checkOauthAuthorizationEndpoint(null, true)) {
             $object->setStatus(self::STATUS_WARN)
@@ -365,8 +393,10 @@ class Groove_Hubshoply_Model_Diagnostic_Api
         }
 
         if (!$this->_testProductsApi($consumer, $token)) {
-            $object->setStatus(self::STATUS_FAIL)
-                ->setDetails('Products API test did not succeed.');
+            if ($this->_tryRewriteRuleTest($object, self::STATUS_FAIL)) {
+                $object->setStatus(self::STATUS_FAIL)
+                    ->setDetails('Products API test did not succeed.');
+            }
         }
 
         if ($token->getIsTemporary()) {
@@ -398,6 +428,9 @@ class Groove_Hubshoply_Model_Diagnostic_Api
         if ($hubshoplyToken->getIsTemporary()) {
             $hubshoplyToken->delete();
         }
+
+        $object->setStatus(self::STATUS_PASS)
+            ->setDetails('');
     }
 
 }

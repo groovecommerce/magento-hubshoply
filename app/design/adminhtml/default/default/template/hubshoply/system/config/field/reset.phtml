@@ -45,7 +45,7 @@
         <div>
             <p class="clearfix" id="hubshoply_reset_state"><?php echo $this->__('To restart your HubShop.ly installation, click the button below.'); ?></p>
             <div class="f-left">
-                <button type="button" class="scalable" onclick="setLocation('<?php echo $this->getResetUrl(); ?>');">
+                <button type="button" class="scalable" onclick="confirmHubshoplyReset();">
                     <span>
                         <span><?php echo $this->__('Reset'); ?></span>
                     </span>
@@ -62,5 +62,12 @@
             <span><?php echo $_comment; ?></span>
         </p>
         <?php endif; ?>
+        <script type="text/javascript">
+            function confirmHubshoplyReset() {
+                if (confirm("<?php echo $this->__('Resetting data will erase HubShop.ly data for all store views. Are you sure you want to continue?'); ?>")) {
+                    setLocation('<?php echo $this->getResetUrl(); ?>');
+                }
+            }
+        </script>
     </td>
 </tr>

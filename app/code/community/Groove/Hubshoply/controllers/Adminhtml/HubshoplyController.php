@@ -207,14 +207,13 @@ class Groove_Hubshoply_Adminhtml_HubshoplyController
     public function resetAction()
     {
         try {
-            $setup      = new Groove_Hubshoply_Model_Resource_Setup('core_setup');
-            $storeId    = Mage::app()->getStore($this->getRequest()->getParam('store'))->getId();
+            $setup = new Groove_Hubshoply_Model_Resource_Setup('core_setup');
 
-            $setup->resetState($storeId);
+            $setup->resetState();
         } catch (Groove_Hubshoply_SetupException $error) {
             $this->_getSession()->addError($error->getMessage());
         } catch (Exception $error) {
-            $this->_getSession()->addError($this->__('Failed to reset setup state. Please contact support.' . $error->getMessage()));
+            $this->_getSession()->addError($this->__('Failed to reset setup state. Please contact support.'));
         }
 
         $this->_redirect(
@@ -282,7 +281,7 @@ class Groove_Hubshoply_Adminhtml_HubshoplyController
         } catch (Groove_Hubshoply_SetupException $error) {
             $this->_getSession()->addError($error->getMessage());
         } catch (Exception $error) {
-            $this->_getSession()->addError($this->__('Failed to start setup. Please contact support. <pre>%s</pre> <br/><pre>%s</pre>', $error->getMessage(), $error->getTraceAsString()));
+            $this->_getSession()->addError($this->__('Failed to start setup. Please contact support.'));
         }
 
         $this->_redirect(
