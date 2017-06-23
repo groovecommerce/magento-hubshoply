@@ -70,12 +70,11 @@ class Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Contact
     {
         $feedUrl    = Mage::getStoreConfig('hubshoply/support/feed_url');
         $data       = (array) Mage::helper('core')->jsonDecode(@file_get_contents($feedUrl));
-
-        if ( !empty($data) && !empty($data['hubshoply'] && !empty($data['hubshoply']['magento']) ) ) {
+        if ( !empty($data) && !empty($data['hubshoply']) && !empty($data['hubshoply']['magento']) ) {
             $update = $data['hubshoply']['magento'];
             $latest = empty($update['latest']) ? $this->getVersion() : $update['latest']['version'];
 
-            if ( version_compare($this->getVersion(), $latest) > 0 ) {
+            if ( version_compare($this->getVersion(), $latest) < 0 ) {
                 $this->setData('update', new Varien_Object($update['latest']));
             }
         }
