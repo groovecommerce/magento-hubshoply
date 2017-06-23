@@ -77,7 +77,6 @@
                     <show_in_default>0</show_in_default>
                     <show_in_website>0</show_in_website>
                     <show_in_store>1</show_in_store>
-                    <expanded>1</expanded>
                     <fields>
                         <enabled translate="label">
                             <label><![CDATA[Enabled]]></label>
@@ -204,6 +203,15 @@
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
                         </reset>
+                        <contact translate="label">
+                            <label><![CDATA[Reset State]]></label>
+                            <frontend_type>label</frontend_type>
+                            <frontend_model>groove_hubshoply/adminhtml_system_config_field_contact</frontend_model>
+                            <sort_order>20</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </contact>
                     </fields>
                 </support>
             </groups>

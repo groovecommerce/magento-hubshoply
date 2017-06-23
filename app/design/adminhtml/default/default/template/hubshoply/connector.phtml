@@ -36,14 +36,22 @@
 
 ?>
 <script type="text/javascript">
+
+    var initialLoad = true;
+
     function setHSLoadState() {
 
         if ( $('hubshoply_setup-head') ) {
             $('hubshoply_setup-head').addClassName('ready');
         }
 
-        Effect.ScrollTo('content');
+        if (!initialLoad) {
+            Effect.ScrollTo('content');
+        } else {
+            initialLoad = false;
+        }
 
     }
+
 </script>
 <iframe src="<?php echo $this->getFrameSrc() ?>" id="hubshoply_frame" name="hubshoply_frame" onload="setHSLoadState();"></iframe>

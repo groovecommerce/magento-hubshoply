@@ -34,7 +34,7 @@
 
 #hubshoply_frame {
     width: 100%;
-    min-height: 1200px;
+    min-height: 1048px;
     border: none;
 }
 
@@ -98,4 +98,10 @@
 
 #hubshoply_support .diagnostics-field-container .item-status > span {
     margin: 0;
+}
+
+#hubshoply_contact_field {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: #d8d8d8 solid 1px;
 }
