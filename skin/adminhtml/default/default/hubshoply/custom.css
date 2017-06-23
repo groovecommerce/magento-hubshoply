@@ -6,12 +6,12 @@
  * @category  Stylesheet
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@
 
 #hubshoply_frame {
     width: 100%;
-    min-height: 1200px;
+    min-height: 1048px;
     border: none;
 }
 
@@ -51,18 +51,57 @@
     width: auto;
 }
 
-#hs_opt_hs_opt_if {
+#hubshoply_setup {
     background: #ffffff;
 }
 
-#hs_opt_hs_opt_if-head {
+#hubshoply_setup-head {
     text-indent: 21px;
     background: url('ajax-loader.gif') no-repeat 0 50%;
     height: 28px;
     line-height: 28px;
 }
 
-#hs_opt_hs_opt_if-head.ready {
+#hubshoply_setup-head.ready {
     background: url('hubshoply_logo.png') no-repeat 0 50%;
     background-size: 16px 16px;
+}
+
+#hubshoply_support_scope_notice {
+    border-bottom: none;
+}
+
+#hubshoply_support {
+
+}
+
+#hubshoply_support .form-list,
+#hubshoply_log_view .form-list {
+    width: 100%;
+}
+
+#hubshoply_support .diagnostics-field-container {
+
+}
+
+#hubshoply_support .diagnostics-field-container td.label {
+    width: 25%;
+}
+
+#hubshoply_support .diagnostics-field-container td.value {
+    width: 75%;
+}
+
+#hubshoply_support .diagnostics-field-container .item-status {
+    display: inline-block;
+}
+
+#hubshoply_support .diagnostics-field-container .item-status > span {
+    margin: 0;
+}
+
+#hubshoply_contact_field {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: #d8d8d8 solid 1px;
 }

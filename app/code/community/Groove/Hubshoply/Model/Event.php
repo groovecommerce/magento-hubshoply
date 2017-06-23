@@ -8,12 +8,12 @@
  * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,45 +46,40 @@ class Groove_Hubshoply_Model_Event
 {
 
     const EVENT_CONTROL_LOG = 'hubshoply_event_observer.log';
-    //Host for Hubshoply App where the script embed comes from
-    const SCRIPT_HOST = '//magento.hubshop.ly/shops/';
+
+    /* @var $_activeStores array */
+    private $_activeStores;
+
+    /* @var $_debug Groove_Hubshoply_Helper_Debug */
+    private $_debug;
 
     /**
-     * Inser the event JavaScript.
+     * Constructor.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->_debug           = Mage::helper('groove_hubshoply/debug');
+        $this->_activeStores    = Mage::getSingleton('groove_hubshoply/config')->getActiveStores();
+    }
+
+    /**
+     * Determine whether the event observed is actionable.
      * 
      * @param Varien_Event_Observer $observer The event details.
      * 
-     * @return void
+     * @return boolean
      */
-    public function insertJavascript(Varien_Event_Observer $observer)
+    private function _canObserve(Varien_Event_Observer $observer)
     {
-        $block = $observer->getBlock();
-        if($block->getType() === 'page/html_head')
-        {
-            //get domain hash
-            $domain_hash = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB);
-            $domain_hash = basename($domain_hash);
-            $domain_hash = md5($domain_hash);
-            //construct the <script> embed
-            $script_tag = sprintf(
-                '<script type="text/javascript" src="%s"></script>',
-                $this::SCRIPT_HOST.$domain_hash.'.js');
-            //construct email capturing script if customer is logged in
-            $email_script = "";
-            if (Mage::getSingleton('customer/session')->isLoggedIn()) {
-                $email = Mage::getSingleton('customer/session')
-                    ->getCustomer()
-                    ->getEmail();
-                $email_script = sprintf('<script type="text/javascript">window.Hubshoply = {}; Hubshoply.customerEmail = "%s";</script>',$email);
-            }
-            // Append new scripts to <head> tag.
-            $transport = $observer->getTransport();
-            $transport->setHtml(
-                $transport->getHtml()
-                .$script_tag
-                .$email_script
-            );
+        if (empty($this->_activeStores)) {
+            return false;
         }
+
+        $storeId = Mage::app()->getStore()->getId();
+
+        return empty($this->_activeStores[$storeId]) ? false : true;
     }
 
     /**
@@ -96,19 +91,29 @@ class Groove_Hubshoply_Model_Event
      */
     public function createAccount(Varien_Event_Observer $observer)
     {
-        /** @var Mage_Customer_Model_Customer $customer */
-        $customer = $observer->getEvent()->getCustomer();
-        $group = Mage::getModel('customer/group')->load($customer->getGroupId());
-        $this->_addToQueue('customer','create',
-                array(
-                    'email' => $customer->getEmail(),
-                    'account_creation_date' => $customer->getCreatedAtTimestamp(),
-                    'first_name' => $customer->getFirstname(),
-                    'last_name' => $customer->getLastname(),
-                    'middle_name_initial' => $customer->getMiddlename(),
-                    'customer_group' => $group->getCode(),
-                ),
-            $customer->getStore()->getId());
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
+        /* @var Mage_Customer_Model_Customer $customer */
+        $customer   = $observer->getEvent()->getCustomer();
+        $group      = Mage::getModel('customer/group')->load($customer->getGroupId());
+
+        $this->_addToQueue(
+            'customer',
+            'create',
+            array(
+                'email'                 => $customer->getEmail(),
+                'account_creation_date' => $customer->getCreatedAtTimestamp(),
+                'first_name'            => $customer->getFirstname(),
+                'last_name'             => $customer->getLastname(),
+                'middle_name_initial'   => $customer->getMiddlename(),
+                'customer_group'        => $group->getCode(),
+            ),
+            $customer->getStore()->getId()
+        );
+
+        $this->_debug->log(sprintf('Event queued: customer.create(%d).', $customer->getId()), Zend_Log::DEBUG);
     }
 
     /**
@@ -120,20 +125,26 @@ class Groove_Hubshoply_Model_Event
      */
     public function createNewsletterAccount(Varien_Event_Observer $observer)
     {
-        //if they updated from subscribed to unsubscriber and vice versa
-        $changed = $observer->getEvent()->getDataObject()->getIsStatusChanged();
-        //what their new subscriber status is
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
+        $changed    = $observer->getEvent()->getDataObject()->getIsStatusChanged();
         $subscribed = $observer->getEvent()->getDataObject()->getStatus();
-        //if their status changed and they are now a subscriber (as opposed to unsubscriber)
-        //add their details to the queue
-        if($changed && ($subscribed == 1) )
-        {
+
+        if ( $changed && ($subscribed == 1) ) {
             $subscriber = $observer->getEvent()->getDataObject()->getSubscriberEmail();
-            $this->_addToQueue('newsletter','subscribe',
+
+            $this->_addToQueue(
+                'newsletter',
+                'subscribe',
                 array(
-                    'email' => $subscriber,
+                    'email'             => $subscriber,
                     'subscription_date' => time(),
-                ));
+                )
+            );
+
+            $this->_debug->log(sprintf('Event queued: newsletter.subscribe(%s).', $subscriber), Zend_Log::DEBUG);
         }
     }
 
@@ -146,21 +157,29 @@ class Groove_Hubshoply_Model_Event
      */
     public function createReview(Varien_Event_Observer $observer)
     {
-        //get review object data
-        $reviewData = $observer->getEvent()->getDataObject()->getData();
-        //format for JSON payload
-        $payload = array(
-            'review_id' => $reviewData['review_id'],
-            'created_at' => $reviewData['created_at'],
-            'product_id' => $reviewData['entity_id'],
-            'customer_id' => $reviewData['customer_id'], //can be null
-            'review_title' => $reviewData['title'],
-            'review_detail' => $reviewData['detail'],
-            'customer_nickname' => $reviewData['nickname'],
-            'product_url_suffix' => Mage::helper('catalog/product')->getProductUrlSuffix(),
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
+        $review = $observer->getEvent()->getDataObject();
+
+        $this->_addToQueue(
+            'review',
+            'create',
+            array(
+                'review_id'             => $review->getId(),
+                'created_at'            => $review->getCreatedAt(),
+                'product_id'            => $review->getEntityId(),
+                'customer_id'           => $review->getCustomerId(), // can be null
+                'review_title'          => $review->getTitle(),
+                'review_detail'         => $review->getDetail(),
+                'customer_nickname'     => $review->getNickname(),
+                'product_url_suffix'    => Mage::helper('catalog/product')->getProductUrlSuffix(),
+            ),
+            $review->getStoreId()
         );
-        //add review to queue
-        $this->_addToQueue('review','create',$payload,$reviewData['store_id']);
+
+        $this->_debug->log(sprintf('Event queued: review.create(%d).', $review->getId()), Zend_Log::DEBUG);
     }
 
     /**
@@ -172,12 +191,19 @@ class Groove_Hubshoply_Model_Event
      */
     public function abandonCartProcessing(Varien_Event_Observer $observer)
     {
-        //get collection of non-queued abandoned carts
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
         $carts = Mage::getModel('groove_hubshoply/abandonedcart')
             ->getCollection()
-            ->addFieldToFilter('enqueued',false);
-        //add carts to queue
+            ->addFieldToFilter('enqueued', false);
+
+        $total = $carts->getSize();
+
         $carts->walk(array($this,'_queueUpCarts'));
+
+        $this->_debug->log(sprintf('Queued %d abandoned carts.', $total), Zend_Log::DEBUG);
     }
 
     /**
@@ -207,10 +233,14 @@ class Groove_Hubshoply_Model_Event
      */
     public function saveOrderBefore(Varien_Event_Observer $observer)
     {
-        /** @var Mage_Sales_Model_Order $order */
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
+        /* @var Mage_Sales_Model_Order $order */
         $order = $observer->getEvent()->getDataObject();
-        if($order->isObjectNew())
-        {
+
+        if ($order->isObjectNew()) {
             $order->setObjectNewTmp(true);
         }
     }
@@ -224,30 +254,33 @@ class Groove_Hubshoply_Model_Event
      */
     public function saveOrderAfter(Varien_Event_Observer $observer)
     {
-        /** @var Mage_Sales_Model_Order $order */
-        $order = $observer->getEvent()->getDataObject();
-        //default payload with Order ID
-        $payload = array(
-            'order_id' => $order->getId(),
-            'product_url_suffix' => Mage::helper('catalog/product')->getProductUrlSuffix(),
-        );
-        //add to queue as updated or created, with appropriate timestamps
-        if($order->getObjectNewTmp())
-        {
-            $payload = $payload + array('created_at' => date(DateTime::W3C,strtotime($order->getCreatedAt())));
-            $this->_addToQueue('order','created',$payload,$order->getStoreId());
-            $order->setObjectNewTmp(false);
+        if (!$this->_canObserve($observer)) {
+            return;
         }
-        else
-        {
-            //if created and updated timestamps are the same, this is the double-save from an order
-                //and not really an update as we want it
-            //still an occasional, but acceptable, room for error
-                //if the timestamps are a second or two apart between saves
-            if($order->getCreatedAt() != $order->getUpdatedAt() )
-            {
-                $payload = $payload + array('updated_at' => date(DateTime::W3C,strtotime($order->getUpdatedAt())));
-                $this->_addToQueue('order','updated',$payload,$order->getStoreId());
+
+        /* @var Mage_Sales_Model_Order $order */
+        $order = $observer->getEvent()->getDataObject();
+
+        $payload = array(
+            'order_id'              => $order->getId(),
+            'product_url_suffix'    => Mage::helper('catalog/product')->getProductUrlSuffix(),
+        );
+
+        if ($order->getObjectNewTmp()) {
+            $payload = $payload + array('created_at' => date(DateTime::W3C, strtotime($order->getCreatedAt())));
+            
+            $this->_addToQueue('order', 'created', $payload, $order->getStoreId());
+
+            $this->_debug->log(sprintf('Event queued: order.created(%d).', $order->getId()), Zend_Log::DEBUG);
+
+            $order->setObjectNewTmp(false);
+        } else {
+            if ( $order->getCreatedAt() != $order->getUpdatedAt() ) {
+                $payload = $payload + array('updated_at' => date(DateTime::W3C, strtotime($order->getUpdatedAt())));
+
+                $this->_addToQueue('order', 'updated', $payload, $order->getStoreId());
+
+                $this->_debug->log(sprintf('Event queued: order.updated(%d).', $order->getId()), Zend_Log::DEBUG);
             }
         }
     }
@@ -261,24 +294,36 @@ class Groove_Hubshoply_Model_Event
      */
     public function saveShipment(Varien_Event_Observer $observer)
     {
-        /** @var Mage_Sales_Model_Order_Shipment $shipment */
-        $shipment = $observer->getEvent()->getDataObject();
-        $email = $shipment->getOrder()->getCustomerEmail();
-        $tracking = $shipment->getAllTracks();
-        $trackingArray = $trackingCarrierArray = array();
-        foreach($tracking as $track)
-        {
-            $trackingArray[] = $track->getNumber();
-            $trackingCarrierArray[] = $track->getTitle();
+        if (!$this->_canObserve($observer)) {
+            return;
         }
-        $payload = array(
-            'email' => $email,
-            'created_at' => date(DateTime::W3C,strtotime($shipment->getCreatedAt())),
-            'tracking_number' => $trackingArray,
-            'tracking_carrier' => $trackingCarrierArray,
-            'product_url_suffix' => Mage::helper('catalog/product')->getProductUrlSuffix(),
+
+        /* @var Mage_Sales_Model_Order_Shipment $shipment */
+        $shipment   = $observer->getEvent()->getDataObject();
+        $email      = $shipment->getOrder()->getCustomerEmail();
+        $tracking   = $shipment->getAllTracks();
+        $tracks     = array();
+        $carriers   = array();
+
+        foreach ($tracking as $track) {
+            $tracks[]   = $track->getNumber();
+            $carriers[] = $track->getTitle();
+        }
+
+        $this->_addToQueue(
+            'shipment',
+            'created',
+            array(
+                'email'                 => $email,
+                'created_at'            => date(DateTime::W3C, strtotime($shipment->getCreatedAt())),
+                'tracking_number'       => $tracks,
+                'tracking_carrier'      => $carriers,
+                'product_url_suffix'    => Mage::helper('catalog/product')->getProductUrlSuffix(),
+            ),
+            $shipment->getStoreId()
         );
-        $this->_addToQueue('shipment','created',$payload,$shipment->getStoreId());
+
+        $this->_debug->log(sprintf('Event queued: shipment.created(%d).', $shipment->getId()), Zend_Log::DEBUG);
     }
 
     /**
@@ -290,24 +335,32 @@ class Groove_Hubshoply_Model_Event
      */
     public function updateCustomer(Varien_Event_Observer $observer)
     {
-        /** @var Mage_Customer_Model_Customer $customer */
-        $customer = $observer->getEvent()->getCustomer();
-        $group = Mage::getModel('customer/group')->load($customer->getGroupId());
-        //only new customers are "updated" otherwise they are caught by the customer registration observer
-        if(!$customer->isObjectNew())
-        {
-            $this->_addToQueue( 'customer', 'updated',
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
+        /* @var Mage_Customer_Model_Customer $customer */
+        $customer   = $observer->getEvent()->getCustomer();
+        $group      = Mage::getModel('customer/group')->load($customer->getGroupId());
+
+        if (!$customer->isObjectNew()) {
+            $this->_addToQueue(
+                'customer',
+                'updated',
                 array(
-                    'customer_id' => $customer->getId(),
-                    'email'       => $customer->getEmail(),
-                    'first_name' => $customer->getFirstname(),
-                    'last_name' => $customer->getLastname(),
-                    'middle_name_initial' => $customer->getMiddlename(),
+                    'customer_id'           => $customer->getId(),
+                    'email'                 => $customer->getEmail(),
+                    'first_name'            => $customer->getFirstname(),
+                    'last_name'             => $customer->getLastname(),
+                    'middle_name_initial'   => $customer->getMiddlename(),
                     'account_creation_date' => $customer->getCreatedAtTimestamp(),
-                    'customer_group' => $group->getCode(),
-                    'updated_at'  => date( DateTime::W3C, strtotime( $customer->getUpdatedAt() ) )
+                    'customer_group'        => $group->getCode(),
+                    'updated_at'            => date(DateTime::W3C, strtotime($customer->getUpdatedAt())),
                 ),
-                $customer->getStore()->getId() );
+                $customer->getStore()->getId()
+            );
+
+            $this->_debug->log(sprintf('Event queued: customer.updated(%d).', $customer->getId()), Zend_Log::DEBUG);
         }
     }
 
@@ -345,6 +398,35 @@ class Groove_Hubshoply_Model_Event
                 ,null,$this::EVENT_CONTROL_LOG
             );
             return false;
+        }
+    }
+
+    /**
+     * Load the current order into the registry for tracking use.
+     *
+     * - Does not support multishipping scenarios.
+     * 
+     * @param Varien_Event_Observer $observer The event details.
+     * 
+     * @return void
+     */
+    public function registerOrderForTracking(Varien_Event_Observer $observer)
+    {
+        if (!$this->_canObserve($observer)) {
+            return;
+        }
+
+        try {
+            $order      = Mage::getModel('sales/order');
+            $orderId    = current( ( (array) $observer->getEvent()->getOrderIds() ) );
+
+            $order->load($orderId);
+
+            if ( $order->getId() > 0 && !Mage::registry('current_order') ) {
+                Mage::register('current_order', $order);
+            }
+        } catch (Exception $error) {
+            Mage::logException($error);
         }
     }
     

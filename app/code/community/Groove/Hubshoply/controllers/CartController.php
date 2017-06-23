@@ -8,12 +8,12 @@
  * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,16 +42,14 @@
  * @author   Groove Commerce
  */
 
-require_once 'Mage/Checkout/controllers/CartController.php';
+require_once Mage::getModuleDir('controllers', 'Mage_Checkout') . DS . 'CartController.php';
 
 class Groove_Hubshoply_CartController
     extends Mage_Checkout_CartController
 {
 
-    const CART_CONTROL_LOG = 'hubshoply_abdncart_controller.log';
-
     /**
-     * Get current active quote instance
+     * Get the current active quote.
      * 
      * @return Mage_Sales_Model_Quote
      */
@@ -67,61 +65,51 @@ class Groove_Hubshoply_CartController
      */
     public function indexAction()
     {
-        $this->getResponse()->setRedirect(Mage::getUrl(''),301)->sendResponse();
+        $this->getResponse()
+            ->setRedirect(Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB), 301)
+            ->sendResponse();
+
         exit;
     }
-    
+
     /**
-     * Restore action.
-     * 
-     * Add abandoned cart quote to current cart
-     * Route: hubshoply/cart/restore/:id
-     *
-     * - If it's loaded, do nothing
-     * - If there is a cart, merge the current and old carts together
-     * - If there is no cart, create a new clone of the old abandoned cart
+     * Restore abandoned cart action.
      *
      * @return void
      */
     public function restoreAction()
     {
-        //Have home page redirect to fallback to
-        $path = Mage::getUrl('');
-        //get the Quote ID to restore
-        $reqQuoteId = intval($this->getRequest()->getParam('quote'));
-        //check if quote ID is a valid positive integer
-        if(false && is_int($reqQuoteId) && $reqQuoteId > 0)
-        {
-            if ( $this->_getQuote()->getId() == $reqQuoteId )
-            {
-                //if quote is already loaded, redirect to cart
-                $path =  Mage::getUrl('checkout/cart');
-            }
-            else
-            {
-                //load requested quote
-                $quote = Mage::getModel( 'sales/quote' )
-                             ->loadByIdWithoutStore( $reqQuoteId );
-                //if quote exists, restore/merge it
-                if ( $quote->getId() )
-                {
-                    try{
-                        Mage::helper('groove_hubshoply/cart')->restore($this->_getQuote(),$quote);
+        $path           = Mage::getUrl(Mage_Core_Model_Store::URL_TYPE_WEB);
+        $activeQuote    = $this->_getQuote();
+        $targetQuoteId  = intval($this->getRequest()->getParam('quote'));
+
+        if ( is_int($targetQuoteId) && $targetQuoteId > 0 ) {
+            if ($activeQuote->getId() == $targetQuoteId) {
+                $path = Mage::getUrl('checkout/cart');
+            } else {
+                $targetQuote = Mage::getModel('sales/quote')->loadByIdWithoutStore($targetQuoteId);
+
+                if ( $targetQuote->getId() > 0 ) {
+                    try {
+                        Mage::helper('groove_hubshoply/cart')->restore($activeQuote, $targetQuote);
+                    } catch (Exception $error) {
+                        Mage::helper('groove_hubshoply/debug')->logError($error);
+
+                        Mage::getSingleton('core/session')->addError(
+                            $this->__('There was a problem restoring your cart.')
+                        );
                     }
-                    catch(Exception $x)
-                    {
-                        Mage::log("Attempted to restore Quote ID $reqQuoteId".PHP_EOL
-                                  .$x->getMessage().PHP_EOL.$x->getTraceAsString()
-                            ,null,$this::CART_CONTROL_LOG);
-                        Mage::getSingleton('core/session')->addError("There was a problem restoring your cart.");
-                    }
+
                     $path = Mage::getUrl('checkout/cart');
                 }
-                //else the quote does not exist and we move on
             }
         }
-        $this->getResponse()->setRedirect($path)->sendResponse();
+
+        $this->getResponse()
+            ->setRedirect($path)
+            ->sendResponse();
+
         exit;
     }
-    
+
 }

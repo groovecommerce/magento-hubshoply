@@ -9,12 +9,12 @@
  * @category  Configuration
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,34 +41,22 @@
         <resources>
             <admin>
                 <children>
-                    <!-- System config permission-->
                     <system>
                         <children>
                             <config>
                                 <children>
-                                    <!-- Matches <section> name in system.xml -->
-                                    <hs_opt>
-                                        <title>HubShop.ly</title>
-                                    </hs_opt>
+                                    <hubshoply translate="title" module="groove_hubshoply">
+                                        <title><![CDATA[HubShop.ly]]></title>
+                                    </hubshoply>
+                                    <hubshoply_log translate="title" module="groove_hubshoply">
+                                        <title><![CDATA[HubShop.ly Log View]]></title>
+                                    </hubshoply_log>
                                 </children>
                             </config>
                         </children>
                     </system>
-                    <!-- Top Nav permission, for the <menu> item below -->
-                    <groove_hubshoply translate="title" module="groove_hubshoply">
-                        <title>HubShop.ly</title>
-                    </groove_hubshoply>
                 </children>
             </admin>
         </resources>
     </acl>
-    <!-- Optional Top Navigation link, was requested to be removed, -->
-    <!-- but can easily be turned on again by uncommenting it below. -->
-    <!-- <menu>
-        <hubshoply_admin translate="title" module="groove_hubshoply">
-            <title>HubShop.ly</title>
-            <action>adminhtml/hubshoply/iframe</action>
-            <sort_order>1000</sort_order>
-        </hubshoply_admin>
-    </menu> -->
 </config>

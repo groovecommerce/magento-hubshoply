@@ -9,12 +9,12 @@
  * @category  Configuration
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,18 +39,26 @@
 <config>
     <modules>
         <Groove_Hubshoply>
-            <version>0.1.5</version>
+            <version>1.0.0</version>
         </Groove_Hubshoply>
     </modules>
-    <adminhtml>
-        <layout>
-            <updates>
-                <groove_hubshoply>
-                    <file>hubshoply.xml</file>
-                </groove_hubshoply>
-            </updates>
-        </layout>
-    </adminhtml>
+    <default>
+        <hubshoply>
+            <advanced>
+                <enabled>0</enabled>
+                <test_mode>0</test_mode>
+                <site_id></site_id>
+                <track_customers>0</track_customers>
+                <frontend_url></frontend_url>
+                <admin_url></admin_url>
+                <user_config></user_config>
+            </advanced>
+            <support>
+                <contact><![CDATA[support@hubshop.ly]]></contact>
+                <feed_url><![CDATA[https://www.hubshop.ly/hubfs/hubshoply-feed.json?id={id}]]></feed_url>
+            </support>
+        </hubshoply>
+    </default>
     <global>
         <models>
             <groove_hubshoply>
@@ -69,6 +77,9 @@
                     <abandonedcart>
                         <table>hubshoply_abandonedcart</table>
                     </abandonedcart>
+                    <log>
+                        <table>hubshoply_log</table>
+                    </log>
                 </entities>
             </groove_hubshoply_resource>
         </models>
@@ -86,42 +97,39 @@
             <groove_hubshoply_setup>
                 <setup>
                     <module>Groove_Hubshoply</module>
+                    <class>Groove_Hubshoply_Model_Resource_Setup</class>
                 </setup>
             </groove_hubshoply_setup>
         </resources>
         <events>
-            <!-- Customer register-->
             <customer_register_success>
                 <observers>
                     <groove_hubspot>
-                        <class>Groove_Hubshoply_Model_Event</class>
+                        <class>groove_hubshoply/event</class>
                         <method>createAccount</method>
                     </groove_hubspot>
                 </observers>
             </customer_register_success>
-            <!-- Customer becomes a subscriber -->
             <newsletter_subscriber_save_commit_after>
                 <observers>
                     <groove_hubspot>
-                        <class>Groove_Hubshoply_Model_Event</class>
+                        <class>groove_hubshoply/event</class>
                         <method>createNewsletterAccount</method>
                     </groove_hubspot>
                 </observers>
             </newsletter_subscriber_save_commit_after>
-            <!-- New customer review-->
             <review_save_after>
                 <observers>
                     <groove_hubspot>
-                            <class>Groove_Hubshoply_Model_Event</class>
+                            <class>groove_hubshoply/event</class>
                             <method>createReview</method>
                     </groove_hubspot>
                 </observers>
             </review_save_after>
-            <!-- Order Creation and Updates Tracking -->
             <sales_order_save_before>
                 <observers>
                     <groove_hubspot>
-                        <class>Groove_Hubshoply_Model_Event</class>
+                        <class>groove_hubshoply/event</class>
                         <method>saveOrderBefore</method>
                     </groove_hubspot>
                 </observers>
@@ -129,51 +137,75 @@
             <sales_order_save_after>
                 <observers>
                     <groove_hubspot>
-                        <class>Groove_Hubshoply_Model_Event</class>
+                        <class>groove_hubshoply/event</class>
                         <method>saveOrderAfter</method>
                     </groove_hubspot>
                 </observers>
             </sales_order_save_after>
-            <!-- Existing Customer Update -->
             <customer_save_after>
                 <observers>
                     <groove_hubspot>
-                        <class>Groove_Hubshoply_Model_Event</class>
+                        <class>groove_hubshoply/event</class>
                         <method>updateCustomer</method>
                     </groove_hubspot>
                 </observers>
             </customer_save_after>
-            <!-- Shipment Tracking  -->
             <sales_order_shipment_save_after>
                 <observers>
                     <groove_hubspot>
-                        <class>Groove_Hubshoply_Model_Event</class>
+                        <class>groove_hubshoply/event</class>
                         <method>saveShipment</method>
                     </groove_hubspot>
                 </observers>
             </sales_order_shipment_save_after>
-            <core_block_abstract_to_html_after>
-                <observers>
-                    <groove_hubspot>
-                        <class>Groove_Hubshoply_Model_Event</class>
-                        <method>insertJavascript</method>
-                    </groove_hubspot>
-                </observers>
-            </core_block_abstract_to_html_after>
         </events>
+        <hubshoply>
+            <diagnostic>
+                <tests>
+                    <mode>
+                        <name><![CDATA[Integration Mode]]></name>
+                        <model>groove_hubshoply/diagnostic_mode</model>
+                    </mode>
+                    <enabled>
+                        <name><![CDATA[Enabled]]></name>
+                        <model>groove_hubshoply/diagnostic_enabled</model>
+                    </enabled>
+                    <customertracking>
+                        <name><![CDATA[Customer Tracking]]></name>
+                        <model>groove_hubshoply/diagnostic_customertracking</model>
+                    </customertracking>
+                    <userconfig>
+                        <name><![CDATA[User Configuration]]></name>
+                        <model>groove_hubshoply/diagnostic_userconfig</model>
+                    </userconfig>
+                    <siteid>
+                        <name><![CDATA[Tracking Script]]></name>
+                        <model>groove_hubshoply/diagnostic_siteid</model>
+                    </siteid>
+                    <consumer>
+                        <name><![CDATA[OAuth Consumer]]></name>
+                        <model>groove_hubshoply/diagnostic_consumer</model>
+                    </consumer>
+                    <role>
+                        <name><![CDATA[REST Role]]></name>
+                        <model>groove_hubshoply/diagnostic_role</model>
+                    </role>
+                    <api>
+                        <name><![CDATA[API Connectivity]]></name>
+                        <model>groove_hubshoply/diagnostic_api</model>
+                    </api>
+                    <queue>
+                        <name><![CDATA[Queue Status]]></name>
+                        <model>groove_hubshoply/diagnostic_queue</model>
+                    </queue>
+                    <log>
+                        <name><![CDATA[System Log]]></name>
+                        <model>groove_hubshoply/diagnostic_log</model>
+                    </log>
+                </tests>
+            </diagnostic>
+        </hubshoply>
     </global>
-    <frontend>
-        <routers>
-            <hubshoply_endpoint>
-                <!-- public endpoint for app to use -->
-                <use>standard</use>
-                <args>
-                    <frontName>hubshoply</frontName>
-                    <module>Groove_Hubshoply</module>
-                </args>
-            </hubshoply_endpoint>
-        </routers>
-    </frontend>
     <admin>
         <routers>
             <adminhtml>
@@ -185,10 +217,55 @@
             </adminhtml>
         </routers>
     </admin>
+    <adminhtml>
+        <layout>
+            <updates>
+                <groove_hubshoply>
+                    <file>hubshoply.xml</file>
+                </groove_hubshoply>
+            </updates>
+        </layout>
+    </adminhtml>
+    <frontend>
+        <routers>
+            <hubshoply_endpoint>
+                <use>standard</use>
+                <args>
+                    <frontName>hubshoply</frontName>
+                    <module>Groove_Hubshoply</module>
+                </args>
+            </hubshoply_endpoint>
+        </routers>
+        <layout>
+            <updates>
+                <groove_hubshoply>
+                    <file>hubshoply.xml</file>
+                </groove_hubshoply>
+            </updates>
+        </layout>
+        <events>
+            <checkout_onepage_controller_success_action>
+                <observers>
+                    <hubshoply_order_registration>
+                        <type>singleton</type>
+                        <model>groove_hubshoply/event</model>
+                        <method>registerOrderForTracking</method>
+                    </hubshoply_order_registration>
+                </observers>
+            </checkout_onepage_controller_success_action>
+        </events>
+    </frontend>
     <crontab>
         <jobs>
+            <hubshoply_clean_log>
+                <schedule>
+                    <cron_expr>0 0 * * *</cron_expr>
+                </schedule>
+                <run>
+                    <model>groove_hubshoply/cron_log::clean</model>
+                </run>
+            </hubshoply_clean_log>
             <hubshoply_token_expire>
-                <!-- every half hour, prune all expired tokens-->
                 <schedule>
                     <cron_expr>*/30 * * * *</cron_expr>
                 </schedule>
@@ -197,25 +274,21 @@
                 </run>
             </hubshoply_token_expire>
             <hubshoply_queue_expire>
-                <!-- daily, clear all 'stale' queue items -->
                 <schedule>
                     <cron_expr>0 0 * * *</cron_expr>
                 </schedule>
                 <run>
                     <model>groove_hubshoply/cron::pruneStaleQueueitems</model>
                 </run>
-                <!-- using (roughly) a month as a placeholder until better definitions of "stale" are found -->
                 <stale_length_in_days>30</stale_length_in_days>
             </hubshoply_queue_expire>
             <hubshoply_abandon_cart_scan>
-                <!-- scan routinely, Magento cron usually runs on 5 minute intervals -->
                 <schedule>
                     <cron_expr>*/5 * * * *</cron_expr>
                 </schedule>
                 <run>
                     <model>groove_hubshoply/cron::findAbandonCarts</model>
                 </run>
-                <!-- Eric proposed an hour means abandoned, can be changed -->
                 <minutes_until_abandoned>60</minutes_until_abandoned>
             </hubshoply_abandon_cart_scan>
         </jobs>

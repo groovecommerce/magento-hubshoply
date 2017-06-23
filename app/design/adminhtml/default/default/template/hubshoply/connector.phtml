@@ -8,12 +8,12 @@
  * @category  Template
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,13 +36,22 @@
 
 ?>
 <script type="text/javascript">
+
+    var initialLoad = true;
+
     function setHSLoadState() {
 
-        if ( $('hs_opt_hs_opt_if-head') ) {
-            $('hs_opt_hs_opt_if-head').addClassName('ready');
+        if ( $('hubshoply_setup-head') ) {
+            $('hubshoply_setup-head').addClassName('ready');
+        }
+
+        if (!initialLoad) {
+            Effect.ScrollTo('content');
+        } else {
+            initialLoad = false;
         }
 
     }
+
 </script>
-<iframe src="<?php echo $this->getFrameSrc() ?>" id="hubshoply_frame" name="hubshoply_frame"
-        seamless="seamless" onload="setHSLoadState();"></iframe>
+<iframe src="<?php echo $this->getFrameSrc() ?>" id="hubshoply_frame" name="hubshoply_frame" onload="setHSLoadState();"></iframe>

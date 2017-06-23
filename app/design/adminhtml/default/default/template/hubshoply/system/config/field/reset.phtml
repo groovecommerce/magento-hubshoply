@@ -1,0 +1,73 @@
+<?php
+
+/**
+ * HubShop.ly Magento
+ * 
+ * Reset button system configuration field template.
+ * 
+ * @category  Template
+ * @package   Groove_Hubshoply
+ * @author    Groove Commerce
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
+ *
+ * LICENSE
+ * 
+ * The MIT License (MIT)
+ * Copyright (c) 2017 Groove Commerce, LLC.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+?>
+<?php /* @var $this Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Reset */ ?>
+<?php $_element = $this->getElement(); ?>
+<?php $_toolTip = $_element->getTooltip(); ?>
+<?php $_comment = $_element->getComment(); ?>
+<tr id="row_<?php echo $_element->getHtmlId(); ?>">
+    <td class="label"><?php echo $_element->getLabel(); ?></td>
+    <td class="value<?php echo $_toolTip ? ' with-tooltip' : ''; ?>" colspan="3">
+        <div>
+            <p class="clearfix" id="hubshoply_reset_state"><?php echo $this->__('To restart your HubShop.ly installation, click the button below.'); ?></p>
+            <div class="f-left">
+                <button type="button" class="scalable" onclick="confirmHubshoplyReset();">
+                    <span>
+                        <span><?php echo $this->__('Reset'); ?></span>
+                    </span>
+                </button>
+            </div>
+        </div>
+        <?php if ($_toolTip) : ?>
+        <div class="field-tooltip">
+            <div><?php echo $_toolTip; ?></div>
+        </div>
+        <?php endif; ?>
+        <?php if ($_comment) : ?>
+        <p class="note">
+            <span><?php echo $_comment; ?></span>
+        </p>
+        <?php endif; ?>
+        <script type="text/javascript">
+            function confirmHubshoplyReset() {
+                if (confirm("<?php echo $this->__('Resetting data will erase HubShop.ly data for all store views. Are you sure you want to continue?'); ?>")) {
+                    setLocation('<?php echo $this->getResetUrl(); ?>');
+                }
+            }
+        </script>
+    </td>
+</tr>

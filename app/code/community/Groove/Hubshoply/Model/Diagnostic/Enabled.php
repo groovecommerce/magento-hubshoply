@@ -1,19 +1,19 @@
 <?php
 
 /**
- * HubShop.ly Magento
+ * Feature enablement diagnostic program.
  * 
- * Configuration frame fieldset element renderer block.
+ * PHP Version 5
  * 
  * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,29 +37,40 @@
 /**
  * Class declaration
  *
- * @category Class_Type_Block
+ * @category Class_Type_Model
  * @package  Groove_Hubshoply
  * @author   Groove Commerce
  */
 
-class Groove_Hubshoply_Block_Sysframe 
-    extends Mage_Adminhtml_Block_Widget_Form_Renderer_Fieldset_Element
+class Groove_Hubshoply_Model_Diagnostic_Enabled
+    implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
     /**
-     * Render the HubShop.ly connector frame.
+     * Return dependencies.
      * 
-     * @param Varien_Data_Form_Element_Abstract $element The form element.
-     * 
-     * @return string
+     * @return array
      */
-    public function render(Varien_Data_Form_Element_Abstract $element)
+    public function getDependencies()
     {
-        $block = $this->getLayout()
-            ->createBlock('groove_hubshoply/adminhtml_hsframe')
-            ->setTemplate('hubshoply/iframe.phtml');
+        return array();
+    }
 
-        return $block->toHtml();
+    /**
+     * Determine whether the feature is enabled.
+     *
+     * @param Varien_Object $object The item to diagnose.
+     * 
+     * @return void
+     */
+    public function run(Varien_Object $object)
+    {
+        if (Mage::getSingleton('groove_hubshoply/config')->isEnabled()) {
+            $object->setStatus(self::STATUS_PASS);
+        } else {
+            $object->setStatus(self::STATUS_WARN)
+                ->setDetails('HubShop.ly is not enabled.');
+        }
     }
 
 }

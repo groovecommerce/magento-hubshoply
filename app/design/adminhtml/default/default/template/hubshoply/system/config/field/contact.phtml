@@ -1,0 +1,71 @@
+<?php
+
+/**
+ * HubShop.ly Magento
+ * 
+ * Contact content system configuration field template.
+ * 
+ * @category  Template
+ * @package   Groove_Hubshoply
+ * @author    Groove Commerce
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
+ *
+ * LICENSE
+ * 
+ * The MIT License (MIT)
+ * Copyright (c) 2017 Groove Commerce, LLC.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+?>
+<?php /* @var $this Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Contact */ ?>
+<?php $_element = $this->getElement(); ?>
+<?php $_toolTip = $_element->getTooltip(); ?>
+<?php $_comment = $_element->getComment(); ?>
+<tr id="row_<?php echo $_element->getHtmlId(); ?>">
+    <td class="value<?php echo $_toolTip ? ' with-tooltip' : ''; ?>" colspan="5">
+        <div id="hubshoply_contact_field">
+            <div class="f-left">
+                <span><?php echo $this->__('Version: %s', $this->getVersion()); ?></span>
+                <?php if ($this->hasUpdate()) : ?>
+                <?php $_update = $this->getUpdate(); ?>
+                <span>&mdash;</span>
+                <a href="<?php echo $_update->getUrl(); ?>" target="_blank"><?php echo $this->__('Update Available'); ?></a>
+                <?php endif; ?>
+            </div>
+            <div class="f-right">
+                <span>
+                    <span>&copy; <?php echo date('Y'); ?></span>
+                    <a href="http://www.hubshop.ly/" target="_blank"><?php echo $this->__('HubShop.ly'); ?></a>
+                </span>
+            </div>
+        </div>
+        <?php if ($_toolTip) : ?>
+        <div class="field-tooltip">
+            <div><?php echo $_toolTip; ?></div>
+        </div>
+        <?php endif; ?>
+        <?php if ($_comment) : ?>
+        <p class="note">
+            <span><?php echo $_comment; ?></span>
+        </p>
+        <?php endif; ?>
+    </td>
+</tr>

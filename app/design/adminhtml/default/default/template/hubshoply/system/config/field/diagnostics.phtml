@@ -1,0 +1,195 @@
+<?php
+
+/**
+ * HubShop.ly Magento
+ * 
+ * Diagnostics system configuration field template.
+ * 
+ * @category  Template
+ * @package   Groove_Hubshoply
+ * @author    Groove Commerce
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
+ *
+ * LICENSE
+ * 
+ * The MIT License (MIT)
+ * Copyright (c) 2017 Groove Commerce, LLC.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+?>
+<?php /* @var $this Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Diagnostics */ ?>
+<?php $_element = $this->getElement(); ?>
+<?php $_toolTip = $_element->getTooltip(); ?>
+<?php $_comment = $_element->getComment(); ?>
+<tr id="row_<?php echo $_element->getHtmlId(); ?>" class="diagnostics-field-container">
+    <td class="label"><?php echo $_element->getLabel(); ?></td>
+    <td class="value<?php echo $_toolTip ? ' with-tooltip' : ''; ?>" colspan="3">
+        <?php if ($this->hasResults()) : ?>
+        <div class="diagnostics-field-content">
+            <div class="grid">
+                <table cellpadding="0" cellspacing="0" class="data" width="100%">
+                    <col width="25%" />
+                    <col width="75%" />
+                    <thead>
+                        <tr class="headings">
+                            <th><?php echo $this->__('Item');?></th>
+                            <th><?php echo $this->__('Status');?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($this->getResults() as $_result) : ?>
+                        <tr>
+                            <td><?php echo $_result->getName(); ?></td>
+                            <td><?php echo $this->getStatusIconHtml($_result); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <input type="hidden" id="hubshoply_diagnostics_result_json" value="<?php echo $this->quoteEscape(Mage::getSingleton('groove_hubshoply/diagnostic')->exportJson($this->getResults())); ?>" />
+        </div>
+        <?php endif; ?>
+        <div>
+            <p class="clearfix" id="hubshoply_diagnostics_status"<?php echo $this->hasResults() ? ' style="display:none;"' : ''; ?>><?php echo $this->__('If you are having trouble with your integration, click the button below.'); ?></p>
+            <div class="f-left">
+                <button type="button" class="scalable" onclick="runHubshoplyDiagnostics();">
+                    <span>
+                        <span><?php echo $this->__('Run Tests'); ?></span>
+                    </span>
+                </button>
+            </div>
+            <?php if ($this->hasResults()) : ?>
+            <div class="f-right">
+                <button type="button" class="scalable" onclick="downloadHubshoplyDiagnosticsReport();">
+                    <span>
+                        <span><?php echo $this->__('Download Report'); ?></span>
+                    </span>
+                </button>
+                <button type="button" class="scalable" onclick="sendHubshoplyDiagnosticsReport();">
+                    <span>
+                        <span><?php echo $this->__('Send Report'); ?></span>
+                    </span>
+                </button>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php if ($_toolTip) : ?>
+        <div class="field-tooltip">
+            <div><?php echo $_toolTip; ?></div>
+        </div>
+        <?php endif; ?>
+        <?php if ($_comment) : ?>
+        <p class="note">
+            <span><?php echo $_comment; ?></span>
+        </p>
+        <?php endif; ?>
+        <script type="text/javascript">
+
+            function runHubshoplyDiagnostics() {
+
+                new Ajax.Request(
+                    '<?php echo $this->getDiagnosticsUrl(); ?>',
+                    {
+                        onFailure : function() {
+                            alert('<?php echo $this->__('We failed to run the diagnostic tests. Please try again.'); ?>');
+                        },
+                        onSuccess : function(transport) {
+                            try {
+                                $('row_<?php echo $_element->getHtmlId(); ?>').update(transport.responseText);
+                            } catch (error) {
+                                alert('<?php echo $this->__('Failed to process the response. Please contact support.'); ?>');
+                            }
+                        }
+                    }
+                );
+
+            }
+
+            function downloadHubshoplyDiagnosticsReport() {
+
+                var results = $F('hubshoply_diagnostics_result_json');
+
+                if (!results) {
+                    return alert('<?php echo $this->__('No results to download.'); ?>');
+                }
+
+                new Ajax.Request(
+                    '<?php echo $this->getDiagnosticsDownloadUrl(); ?>',
+                    {
+                        method      : 'POST',
+                        parameters  : { data: results },
+                        onFailure   : function() {
+                            alert('<?php echo $this->__('Failed to download the report. Please try again.'); ?>');
+                        },
+                        onSuccess   : function(transport) {
+                            try {
+                                var response = transport.responseText.evalJSON();
+
+                                setLocation(response.url);
+                            } catch (error) {
+                                alert('<?php echo $this->__('Failed to process the response. Please contact support.'); ?>');
+                            }
+                        }
+                    }
+                );
+
+            }
+
+            function sendHubshoplyDiagnosticsReport() {
+
+                var results = $F('hubshoply_diagnostics_result_json');
+
+                if (!results) {
+                    return alert('<?php echo $this->__('No results to send.'); ?>');
+                }
+
+                new Ajax.Request(
+                    '<?php echo $this->getDiagnosticsSendUrl(); ?>',
+                    {
+                        method      : 'POST',
+                        parameters  : { data: results },
+                        onFailure   : function() {
+                            alert('<?php echo $this->__('Failed to send the report. Please try again.'); ?>');
+                        },
+                        onSuccess   : function(transport) {
+                            try {
+                                var response    = transport.responseText.evalJSON(),
+                                    statusEl    = $('hubshoply_diagnostics_status'),
+                                    message     = '<?php echo $this->__('Report sent successfully.'); ?>';
+
+                                if ( response && 'message' in response && response.message.length ) {
+                                    message = response.message;
+                                }
+
+                                statusEl.update(message);
+                                statusEl.show();
+                            } catch (error) {
+                                alert('<?php echo $this->__('Failed to process the response. Please contact support.'); ?>');
+                            }
+                        }
+                    }
+                );
+
+            }
+
+        </script>
+    </td>
+</tr>

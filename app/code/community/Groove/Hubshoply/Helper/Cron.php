@@ -8,12 +8,12 @@
  * @category  Class
  * @package   Groove_Hubshoply
  * @author    Groove Commerce
- * @copyright 2016 Groove Commerce, LLC. All Rights Reserved.
+ * @copyright 2017 Groove Commerce, LLC. All Rights Reserved.
  *
  * LICENSE
  * 
  * The MIT License (MIT)
- * Copyright (c) 2016 Groove Commerce, LLC.
+ * Copyright (c) 2017 Groove Commerce, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,7 +49,7 @@ class Groove_Hubshoply_Helper_Cron
     /**
      * This function will delete all expired authentication tokens.
      *
-     * @return void
+     * @return integer
      */
     public function pruneExpiredTokens()
     {
@@ -65,7 +65,12 @@ class Groove_Hubshoply_Helper_Cron
         //select those who are past expiration
         $tokens->getSelect()->having('time_diff_token_expirey <= 0');
         //delete them
+        
+        $total = $tokens->getSize();
+
         $tokens->walk('delete');
+
+        return $total;
     }
 
     /**
@@ -73,7 +78,7 @@ class Groove_Hubshoply_Helper_Cron
      * 
      * @param int $days The age limit for queue items.
      *
-     * @return void
+     * @return integer
      */
     public function pruneStaleQueueItems($days)
     {
@@ -88,7 +93,12 @@ class Groove_Hubshoply_Helper_Cron
         //filter to get all items older than `$days` days
         $queueitems->getSelect()->having('date_diff_queue_age >= '.$days);
         //delete them
+        
+        $total = $queueitems->getSize();
+
         $queueitems->walk('delete');
+
+        return $total;
     }
 
     /**
@@ -96,7 +106,7 @@ class Groove_Hubshoply_Helper_Cron
      * 
      * @param int $minutes The age an order-less cart/quote is considered abandoned
      *
-     * @return void
+     * @return integer
      */
     public function findAbandonCarts($minutes)
     {
@@ -122,8 +132,13 @@ class Groove_Hubshoply_Helper_Cron
         //All "abandoned carts" that have since been ordered can be removed from the abandoned cart index
         $converted = Mage::getModel('groove_hubshoply/abandonedcart')->getCollection()
                         ->addFieldToFilter('quote_id',array('nin'=>$abandonedIds))->walk('delete');
+
+        $total = count($abandonedIds);
+
         //Add or update Abandoned cart index
         $abandoned->walk(array($this,'trackAbandonCart'));
+
+        return $total;
     }
 
     /**
@@ -135,6 +150,10 @@ class Groove_Hubshoply_Helper_Cron
      */
     public function trackAbandonCart(Mage_Sales_Model_Quote $quote)
     {
+        if ( !Mage::getSingleton('groove_hubshoply/config')->isEnabled($quote->getStoreId()) ) {
+            return;
+        }
+
         //get abandoned cart for quote, or a new one if it doesn't exist
         $cart = Mage::getModel('groove_hubshoply/abandonedcart')
             ->loadByQuoteStore($quote->getId(),$quote->getStoreId());
