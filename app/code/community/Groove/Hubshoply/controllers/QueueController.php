@@ -81,7 +81,7 @@ class Groove_Hubshoply_QueueController
      */
     private function _isStoreEnabled()
     {
-        Mage::getSingleton('groove_hubshoply/config')->isEnabled(Mage::app()->getStore()->getId());
+        return Mage::getSingleton('groove_hubshoply/config')->isEnabled(Mage::app()->getStore()->getId());
     }
 
     /**
