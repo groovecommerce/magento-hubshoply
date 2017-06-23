@@ -55,7 +55,7 @@
             </advanced>
             <support>
                 <contact><![CDATA[support@hubshop.ly]]></contact>
-                <feed_url><![CDATA[https://www.hubshop.ly/hubfs/hubshoply-feed.json]]></feed_url>
+                <feed_url><![CDATA[https://www.hubshop.ly/hubfs/hubshoply-feed.json?id={id}]]></feed_url>
             </support>
         </hubshoply>
     </default>

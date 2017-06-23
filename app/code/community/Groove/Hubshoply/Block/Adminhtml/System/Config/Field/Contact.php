@@ -68,8 +68,9 @@ class Groove_Hubshoply_Block_Adminhtml_System_Config_Field_Contact
      */
     private function _checkUpdates()
     {
-        $feedUrl    = Mage::getStoreConfig('hubshoply/support/feed_url');
+        $feedUrl    = str_replace('{id}', strval(time()), Mage::getStoreConfig('hubshoply/support/feed_url'));
         $data       = (array) Mage::helper('core')->jsonDecode(@file_get_contents($feedUrl));
+        
         if ( !empty($data) && !empty($data['hubshoply']) && !empty($data['hubshoply']['magento']) ) {
             $update = $data['hubshoply']['magento'];
             $latest = empty($update['latest']) ? $this->getVersion() : $update['latest']['version'];
