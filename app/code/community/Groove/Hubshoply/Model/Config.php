@@ -109,6 +109,88 @@ class Groove_Hubshoply_Model_Config
     }
 
     /**
+     * Apply modifications to the given target path, a la Wacky Wednesday style.
+     *
+     * Available Modifiers
+     * -------------------
+     *
+     *      [!] Subtracts the given term from the target path
+     *      [>] Adds the given term to the target path
+     *
+     * Example
+     * -------
+     *
+     *      Store Base URL:
+     *      - http://www.shop.com/us/
+     *
+     *      Custom Frontend URL:
+     *      - http://www.shop.com/!us>service
+     *
+     *      Result:
+     *      - http://www.shop.com/service/
+     *
+     * Explanation
+     * -----------
+     *
+     * Path modifiers are designed to give extra control to custom frontend URLs.
+     * They are designed specifically to address Magento shops on a subfolder for
+     * which the native REST API has no support.
+     *
+     * For example, consider this store URL:
+     *  - http://www.shop.com/us/
+     *
+     * Unless the directory is a real server path with `api.php` in it, the URL
+     * assembly and callbacks would fail. In such a case, the modifier works to
+     * augment the path component of the store base URL in order to comply with
+     * REST API endpoint expectations.
+     *
+     * Using a custom frontend URL alone is not sufficient, because the algorithm
+     * for merging custom URLs with normal URLs cannot detect which part of a path
+     * was for the base URL and which part was for the application route.
+     *
+     * Therefore, using the example above, we could would a modifier like so:
+     * - http://www.shop.com/!us
+     *
+     * Which would assemble to a REST endpoint like the following:
+     * - http://www.shop.com/api/rest/products
+     * 
+     * @param string &$expressionPath The target path modifier expression.
+     * @param string &$targetPath     The target path.
+     * 
+     * @return void
+     */
+    private function _applyUrlPathModifiers(&$expressionPath, &$targetPath)
+    {
+        if (is_array($expressionPath)) {
+            $expressionPath = &$expressionPath['path'];
+        }
+
+        if (is_array($targetPath)) {
+            $targetPath = &$targetPath['path'];
+        }
+
+        preg_match_all('/([!+]*)([\w\d\/]*)/', $expressionPath, $components);
+
+        if (!empty($components[2])) {
+            foreach ($components[1] as $index => $modifier) {
+                switch ($modifier) {
+                    case '!' : 
+                        $targetPath = str_replace($components[2][$index], '', $targetPath);
+                        break;
+                    case '>' :
+                        $targetPath .= $components[2][$index];
+                        break;
+                    default :
+                        break;
+                }
+            }
+
+            // Clear the expression when done so it doesn't end up in the assembled URL
+            $expressionPath = '';
+        }
+    }
+
+    /**
      * Get the configured host name for the requested store.
      * 
      * @param integer $storeId The target store ID.
@@ -297,6 +379,8 @@ class Groove_Hubshoply_Model_Config
 
         // REST API rewrite compatibility fix
         $urlData['path'] = ltrim( str_replace( 'index.php', '', ( rtrim( $urlData['path'], '/' ) ) ), '/' );
+
+        $this->_applyUrlPathModifiers($customUrl, $urlData);
 
         if (!empty($customUrl['path'])) {
             $customUrl['path'] = ltrim( str_replace( 'index.php', '', ( rtrim( $customUrl['path'], '/') ) ), '/' );
