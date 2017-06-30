@@ -46,6 +46,8 @@ class Groove_Hubshoply_Model_Diagnostic_Userconfig
     implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
+    const KB_ARTICLE_URL = 'http://support.hubshop.ly/magento/magento-customer-tracking';
+
     /**
      * Return dependencies.
      * 
@@ -78,7 +80,8 @@ class Groove_Hubshoply_Model_Diagnostic_Userconfig
 
             if ( count($value) !== 2 ) {
                 $object->setStatus(self::STATUS_WARN)
-                    ->setDetails(sprintf('Failed to parse user configuration on row %d', $i));
+                    ->setDetails(sprintf('Failed to parse user configuration on row %d', $i))
+                    ->setUrl(self::KB_ARTICLE_URL);
 
                 break;
             } else {
@@ -91,7 +94,8 @@ class Groove_Hubshoply_Model_Diagnostic_Userconfig
         foreach ($config as $key) {
             if (!in_array($key, $generatedConfig)) {
                 $object->setStatus(self::STATUS_WARN)
-                    ->setDetails(sprintf('Expected value for %s but found none.', $key));
+                    ->setDetails(sprintf('Expected value for %s but found none.', $key))
+                    ->setUrl(self::KB_ARTICLE_URL);
 
                 break;
             }

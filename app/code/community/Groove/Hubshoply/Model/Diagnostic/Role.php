@@ -46,6 +46,8 @@ class Groove_Hubshoply_Model_Diagnostic_Role
     implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
+    const KB_ARTICLE_URL = 'http://support.hubshop.ly/magento/magento-rest-roles';
+
     /**
      * Get the admin user ID for role verification.
      * 
@@ -87,11 +89,13 @@ class Groove_Hubshoply_Model_Diagnostic_Role
                 $object->setStatus(self::STATUS_PASS);
             } else {
                 $object->setStatus(self::STATUS_FAIL)
-                    ->setDetails('REST role was not found.');
+                    ->setDetails('REST role was not found.')
+                    ->setUrl(self::KB_ARTICLE_URL);
             }
         } catch (Exception $error) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails(sprintf('API user error: %s', $error->getMessage()));
+                ->setDetails(sprintf('API user error: %s', $error->getMessage()))
+                ->setUrl(self::KB_ARTICLE_URL);
         }
     }
 

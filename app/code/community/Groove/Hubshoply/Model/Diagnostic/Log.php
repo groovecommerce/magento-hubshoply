@@ -46,6 +46,8 @@ class Groove_Hubshoply_Model_Diagnostic_Log
     implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
+    const KB_ARTICLE_URL = 'http://support.hubshop.ly/magento/magento-system-log';
+
     /**
      * Return dependencies.
      * 
@@ -82,7 +84,8 @@ class Groove_Hubshoply_Model_Diagnostic_Log
 
         if ( $collection->getSize() > 0 ) {
             $object->setStatus(self::STATUS_WARN)
-                ->setDetails('Errors found in HubShop.ly system log.');
+                ->setDetails('Errors found in HubShop.ly system log.')
+                ->setUrl(self::KB_ARTICLE_URL);
         } else {
             $object->setStatus(self::STATUS_PASS);
         }

@@ -46,6 +46,8 @@ class Groove_Hubshoply_Model_Diagnostic_Siteid
     implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
+    const KB_ARTICLE_URL = 'http://support.hubshop.ly/magento/magento-tracking-script';
+
     /**
      * Confirm the tracking script is working.
      * 
@@ -95,7 +97,8 @@ class Groove_Hubshoply_Model_Diagnostic_Siteid
 
         if (!$this->_validateTrackingScript($url)) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails('Tracking script failed to load for the current site ID.');
+                ->setDetails('Tracking script failed to load for the current site ID.')
+                ->setUrl(self::KB_ARTICLE_URL);
         } else {
             $object->setStatus(self::STATUS_PASS);
         }

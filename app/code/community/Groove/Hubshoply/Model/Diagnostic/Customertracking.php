@@ -46,6 +46,8 @@ class Groove_Hubshoply_Model_Diagnostic_Customertracking
     implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
+    const KB_ARTICLE_URL = 'http://support.hubshop.ly/magento/magento-customer-tracking';
+
     /**
      * Return dependencies.
      * 
@@ -71,7 +73,8 @@ class Groove_Hubshoply_Model_Diagnostic_Customertracking
             $object->setStatus(self::STATUS_PASS);
         } else {
             $object->setStatus(self::STATUS_WARN)
-                ->setDetails('Customer tracking is not enabled.');
+                ->setDetails('Customer tracking is not enabled.')
+                ->setUrl(self::KB_ARTICLE_URL);
         }
     }
 
