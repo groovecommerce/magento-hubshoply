@@ -46,6 +46,8 @@ class Groove_Hubshoply_Model_Diagnostic_Queue
     implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
+    const KB_ARTICLE_URL = 'http://support.hubshop.ly/magento/magento-queue-status';
+
     /**
      * Return dependencies.
      * 
@@ -74,7 +76,8 @@ class Groove_Hubshoply_Model_Diagnostic_Queue
                 ->setDetails(sprintf('Currently %d items in the queue.', $collection->getSize()));
         } else {
             $object->setStatus(self::STATUS_WARN)
-                ->setDetails('No items in the queue.');
+                ->setDetails('No items in the queue.')
+                ->setUrl(self::KB_ARTICLE_URL);
         }
     }
 

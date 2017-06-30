@@ -49,7 +49,8 @@ class Groove_Hubshoply_Model_Diagnostic_Api
 {
 
     // For development testing only -- live service will not regard this setting
-    const VERIFY_PEER = false;
+    const VERIFY_PEER       = false;
+    const KB_ARTICLE_URL    = 'http://support.hubshop.ly/magento/magento-api-connectivity';
 
     /**
      * Attempt to verify redirect rules for API access.
@@ -279,7 +280,8 @@ class Groove_Hubshoply_Model_Diagnostic_Api
     {
         if (!$this->_checkRedirectRule()) {
             $object->setStatus($status)
-                ->setDetails('Magento API redirect rule was not found.');
+                ->setDetails('Magento API redirect rule was not found.')
+                ->setUrl(self::KB_ARTICLE_URL);
 
             return false;
         }
@@ -343,37 +345,43 @@ class Groove_Hubshoply_Model_Diagnostic_Api
 
         if ($this->_checkOauthAuthorizationEndpoint(null, true)) {
             $object->setStatus(self::STATUS_WARN)
-                ->setDetails('Encountered redirect on authorization endpoint.');
+                ->setDetails('Encountered redirect on authorization endpoint.')
+                ->setUrl(self::KB_ARTICLE_URL);
 
             // Skip to allow this warning to have greater severity
             $skipHubshoplyEndpointTest = true;
         } else if (!$this->_checkOauthAuthorizationEndpoint(false)) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails('Authorization endpoint could not be reached.');
+                ->setDetails('Authorization endpoint could not be reached.')
+                ->setUrl(self::KB_ARTICLE_URL);
 
             return;
         } else if ( self::VERIFY_PEER && !$this->_checkOauthAuthorizationEndpoint() ) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails('SSL peer verification failed on authorization endpoint.');
+                ->setDetails('SSL peer verification failed on authorization endpoint.')
+                ->setUrl(self::KB_ARTICLE_URL);
 
             return;
         }
 
         if ( !$skipHubshoplyEndpointTest && !$this->_checkHubshoplyAuthorizationEndpoint() ) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails('HubShop.ly queue endpoint could not be reached.');
+                ->setDetails('HubShop.ly queue endpoint could not be reached.')
+                ->setUrl(self::KB_ARTICLE_URL);
         }
 
         try {
             $consumer = Mage::helper('groove_hubshoply/oauth')->getConsumer(null, false);
         } catch (Mage_Core_Exception $error) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails(sprintf('Consumer validation error: %s', $error->getMessage()));
+                ->setDetails(sprintf('Consumer validation error: %s', $error->getMessage()))
+                ->setUrl(self::KB_ARTICLE_URL);
 
             return;
         } catch (Exception $error) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails(sprintf('Internal server error on consumer validation: %s', $error->getMessage()));
+                ->setDetails(sprintf('Internal server error on consumer validation: %s', $error->getMessage()))
+                ->setUrl(self::KB_ARTICLE_URL);
 
             return;
         }
@@ -382,12 +390,14 @@ class Groove_Hubshoply_Model_Diagnostic_Api
             $token = $this->_generateToken($consumer);
         } catch (Mage_Core_Exception $error) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails(sprintf('Token validation error: %s', $error->getMessage()));
+                ->setDetails(sprintf('Token validation error: %s', $error->getMessage()))
+                ->setUrl(self::KB_ARTICLE_URL);
 
             return;
         } catch (Exception $error) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails(sprintf('Internal server error on token validation: %s', $error->getMessage()));
+                ->setDetails(sprintf('Internal server error on token validation: %s', $error->getMessage()))
+                ->setUrl(self::KB_ARTICLE_URL);
 
             return;
         }
@@ -395,7 +405,8 @@ class Groove_Hubshoply_Model_Diagnostic_Api
         if (!$this->_testProductsApi($consumer, $token)) {
             if ($this->_tryRewriteRuleTest($object, self::STATUS_FAIL)) {
                 $object->setStatus(self::STATUS_FAIL)
-                    ->setDetails('Products API test did not succeed.');
+                    ->setDetails('Products API test did not succeed.')
+                    ->setUrl(self::KB_ARTICLE_URL);
             }
         }
 
@@ -406,23 +417,27 @@ class Groove_Hubshoply_Model_Diagnostic_Api
         if ( $object->getStatus() === self::STATUS_FAIL ) {
             return;
         }
+        
         try {
             $hubshoplyToken = $this->_generateHubshoplyToken($consumer);
         } catch (Mage_Core_Exception $error) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails(sprintf('HubShop.ly token validation error: %s', $error->getMessage()));
+                ->setDetails(sprintf('HubShop.ly token validation error: %s', $error->getMessage()))
+                ->setUrl(self::KB_ARTICLE_URL);
 
             return;
         } catch (Exception $error) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails(sprintf('Internal server error on HubShop.ly token validation: %s', $error->getMessage()));
+                ->setDetails(sprintf('Internal server error on HubShop.ly token validation: %s', $error->getMessage()))
+                ->setUrl(self::KB_ARTICLE_URL);
 
             return;
         }
 
         if (!$this->_testHubshoplyQueueApi($consumer, $hubshoplyToken)) {
             $object->setStatus(self::STATUS_FAIL)
-                ->setDetails('HubShop.ly queue test did not succeed.');
+                ->setDetails('HubShop.ly queue test did not succeed.')
+                ->setUrl(self::KB_ARTICLE_URL);
         }
 
         if ($hubshoplyToken->getIsTemporary()) {

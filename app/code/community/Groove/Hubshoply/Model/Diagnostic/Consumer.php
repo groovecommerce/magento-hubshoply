@@ -46,6 +46,8 @@ class Groove_Hubshoply_Model_Diagnostic_Consumer
     implements Groove_Hubshoply_Model_Diagnostic_Interface
 {
 
+    const KB_ARTICLE_URL = 'http://support.hubshop.ly/magento/magento-oauth-consumer';
+
     /**
      * Return dependencies.
      * 
@@ -78,7 +80,8 @@ class Groove_Hubshoply_Model_Diagnostic_Consumer
         $object->setStatus( $successful ? self::STATUS_PASS : self::STATUS_FAIL );
 
         if (!$successful) {
-            $object->setDetails('OAuth consumer is not available.');
+            $object->setDetails('OAuth consumer is not available.')
+                ->setUrl(self::KB_ARTICLE_URL);
         }
     }
 
