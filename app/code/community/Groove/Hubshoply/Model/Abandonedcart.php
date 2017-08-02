@@ -104,7 +104,7 @@ class Groove_Hubshoply_Model_Abandonedcart
             'email'      => $cart->getCustomerEmail(),
             'created_at' => date(DateTime::W3C,strtotime($cart->getCreatedAt())),
             'updated_at' => date(DateTime::W3C,strtotime($cart->getUpdatedAt())),
-            'total_price' => $cart->getGrandTotal(),
+            'total_price' => (string) number_format($cart->getGrandTotal(), 4),
             'product_ids' => $product_ids,
             'qty_in_cart' => $cart->getItemsQty(),
             'currency' => $cart->getQuoteCurrencyCode()
