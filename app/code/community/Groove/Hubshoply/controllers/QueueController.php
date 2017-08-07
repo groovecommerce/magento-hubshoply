@@ -46,6 +46,8 @@ class Groove_Hubshoply_QueueController
     extends Mage_Core_Controller_Front_Action
 {
 
+    private $_defaultOrderFields = array('entity_id', 'increment_id', 'customer_firstname', 'customer_lastname', 'customer_email');
+
     /**
      * Check for authorization. Halt with a 401 if unauthorized, else return token.
      * 
@@ -72,6 +74,28 @@ class Groove_Hubshoply_QueueController
         } else {
             return $tokenModel;
         }
+    }
+
+    /**
+     * Get the fields from the request.
+     * 
+     * @param string $key Optionally specify the target field key.
+     * 
+     * @return array
+     */
+    private function _getFields($key = 'fields')
+    {
+        $fields = $this->getRequest()->getParam('fields', array());
+
+        if (!is_array($fields)) {
+            $fields = explode(',', (string) $fields);
+        }
+
+        if (empty($fields)) {
+            $fields = $this->_defaultOrderFields;
+        }
+
+        return $fields;
     }
 
     /**
@@ -365,6 +389,48 @@ class Groove_Hubshoply_QueueController
             Mage::helper('groove_hubshoply/debug')->logException($error);
 
             $this->_sendError(500, 'Failed to process mark request.', $error->getMessage());
+        }
+    }
+
+    /**
+     * Order request action.
+     *
+     * - Used during initial sync.
+     * 
+     * @return void
+     */
+    public function ordersAction()
+    {
+        try {
+            Mage::helper('groove_hubshoply/debug')->log(
+                sprintf('Request for orders from %s', Mage::helper('core/http')->getRemoteAddr()),
+                Zend_Log::INFO
+            );
+
+            $this->_checkAuthorization();
+
+            $fields     = $this->_getFields();
+            $count      = (int) $this->getRequest()->getParam('limit', '1');
+            $offset     = (int) $this->getRequest()->getParam('page', '1');
+
+            $resource   = Mage::getResourceSingleton('sales/order');
+            $adapter    = $resource->getReadConnection();
+            $select     = $adapter->select()
+                ->from($resource->getMainTable(), $fields)
+                ->limit($count, $offset);
+
+            $result = $adapter->fetchAll($select);
+
+            $this->getResponse()
+                ->setHeader('Content-Type', 'application/json')
+                ->setBody(Mage::helper('core')->jsonEncode($result))
+                ->sendResponse();
+
+            exit;
+        } catch (Exception $error) {
+            Mage::helper('groove_hubshoply/debug')->logException($error);
+
+            $this->_sendError(500, 'Failed to process order request.', $error->getMessage());
         }
     }
     
