@@ -46,7 +46,11 @@ class Groove_Hubshoply_QueueController
     extends Mage_Core_Controller_Front_Action
 {
 
-    private $_defaultOrderFields = array('entity_id', 'increment_id', 'customer_firstname', 'customer_lastname', 'customer_email');
+    private $_defaultOrderFields    = array(
+        'entity_id', 'increment_id', 'customer_firstname', 'customer_lastname', 'customer_email'
+    );
+
+    private $_joinAddressFieldsFlag = false;
 
     /**
      * Check for authorization. Halt with a 401 if unauthorized, else return token.
@@ -77,13 +81,47 @@ class Groove_Hubshoply_QueueController
     }
 
     /**
-     * Get the fields from the request.
+     * Get the addresses assigned to the current order.
+     * 
+     * @param integer $orderId The order entity ID.
+     * 
+     * @return array
+     */
+    private function _getAddresses($orderId)
+    {
+        $resource   = Mage::getResourceSingleton('sales/order_address');
+        $adapter    = $resource->getReadConnection();
+        $select     = $adapter->select()
+            ->from($resource->getMainTable())
+            ->where('parent_id = ?', $orderId);
+
+        return $adapter->fetchAll($select);
+    }
+
+    /**
+     * Get the total orders count.
+     * 
+     * @return integer
+     */
+    private function _getTotalOrders()
+    {
+        $resource   = Mage::getResourceSingleton('sales/order');
+        $adapter    = $resource->getReadConnection();
+        $select     = $adapter->select()
+            ->from($resource->getMainTable(), array())
+            ->columns(array('total' => new Zend_Db_Expr('COUNT(*)')));
+
+        return (int) $adapter->fetchOne($select);
+    }
+
+    /**
+     * Initialize the requested fields from the request.
      * 
      * @param string $key Optionally specify the target field key.
      * 
      * @return array
      */
-    private function _getFields($key = 'fields')
+    private function _initFields($key = 'fields')
     {
         $fields = $this->getRequest()->getParam('fields', array());
 
@@ -93,6 +131,18 @@ class Groove_Hubshoply_QueueController
 
         if (empty($fields)) {
             $fields = $this->_defaultOrderFields;
+        }
+
+        $addressesIndex = array_search('addresses', $fields);
+
+        if ($addressesIndex !== false) {
+            array_splice($fields, $addressesIndex, 1);
+
+            $this->_joinAddressFieldsFlag = true;
+        }
+
+        if (!in_array('entity_id', $fields)) {
+            array_unshift($fields, 'entity_id');
         }
 
         return $fields;
@@ -393,6 +443,57 @@ class Groove_Hubshoply_QueueController
     }
 
     /**
+     * Single order request action.
+     * 
+     * @return void
+     */
+    public function orderAction()
+    {
+        try {
+            Mage::helper('groove_hubshoply/debug')->log(
+                sprintf('Request for single order from %s', Mage::helper('core/http')->getRemoteAddr()),
+                Zend_Log::INFO
+            );
+
+            $this->_checkAuthorization();
+
+            $fields         = $this->_initFields();
+            $incrementId    = $this->getRequest()->getParam('order_id');
+
+            if (empty($incrementId)) {
+                return $this->_sendError(400, 'Bad Request', 'No order increment ID provided.');
+            }
+
+            $resource   = Mage::getResourceSingleton('sales/order');
+            $adapter    = $resource->getReadConnection();
+            $select     = $adapter->select()
+                ->from($resource->getMainTable(), $fields)
+                ->where('increment_id = ?', $incrementId);
+
+            $result = $adapter->fetchRow($select);
+
+            if (empty($result)) {
+                return $this->_sendError(404, 'Not Found', 'No order for this ID could be found.');
+            }
+
+            if ($this->_joinAddressFieldsFlag) {
+                $result['addresses'] = $this->_getAddresses($result['entity_id']);
+            }
+
+            $this->getResponse()
+                ->setHeader('Content-Type', 'application/json')
+                ->setBody(Mage::helper('core')->jsonEncode($result))
+                ->sendResponse();
+
+            exit;
+        } catch (Exception $error) {
+            Mage::helper('groove_hubshoply/debug')->logException($error);
+
+            $this->_sendError(500, 'Failed to process order request.', $error->getMessage());
+        }
+    }
+
+    /**
      * Order request action.
      *
      * - Used during initial sync.
@@ -409,7 +510,7 @@ class Groove_Hubshoply_QueueController
 
             $this->_checkAuthorization();
 
-            $fields     = $this->_getFields();
+            $fields     = $this->_initFields();
             $count      = (int) $this->getRequest()->getParam('limit', '1');
             $offset     = (int) $this->getRequest()->getParam('page', '1');
 
@@ -417,9 +518,26 @@ class Groove_Hubshoply_QueueController
             $adapter    = $resource->getReadConnection();
             $select     = $adapter->select()
                 ->from($resource->getMainTable(), $fields)
-                ->limit($count, $offset);
+                ->limit($count, ( $offset - 1 ) * $count );
 
-            $result = $adapter->fetchAll($select);
+            $records    = $adapter->fetchAll($select);
+            $result     = array(
+                'orders'    => array(),
+                'page'      => $offset,
+                'limit'     => $count,
+                'total'     => 0,
+                'pages'     => 0,
+            );
+
+            if ($this->_joinAddressFieldsFlag) {
+                foreach ($records as &$row) {
+                    $row['addresses'] = $this->_getAddresses($row['entity_id']);
+                }
+            }
+
+            $result['orders']   = $records;
+            $result['total']    = $this->_getTotalOrders();
+            $result['pages']    = ceil( $result['total'] / $result['limit'] );
 
             $this->getResponse()
                 ->setHeader('Content-Type', 'application/json')
