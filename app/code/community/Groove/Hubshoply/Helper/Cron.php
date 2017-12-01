@@ -55,18 +55,13 @@ class Groove_Hubshoply_Helper_Cron
     {
         //get all tokens with an additional column
         // telling how many days they have until they expire
-        $tokens = Mage::getModel('groove_hubshoply/token')
-                      ->getCollection()
-                      ->addExpressionFieldToSelect(
-                          'time_diff_token_expirey',
-                          'TIMESTAMPDIFF(MINUTE,NOW(),{{exp}})',
-                          array('exp' => 'expires')
-                      );
-        //select those who are past expiration
-        $tokens->getSelect()->having('time_diff_token_expirey <= 0');
-        //delete them
-        
-        $total = $tokens->getSize();
+        $tokens = Mage::getResourceModel('groove_hubshoply/token_collection');
+
+        $tokens->getSelect()
+            ->columns(array('time_diff_token_expirey' => new Zend_Db_Expr('TIMESTAMPDIFF(MINUTE, NOW(), expires)')))
+            ->having('time_diff_token_expirey <= 0');
+
+        $total = count($tokens);
 
         $tokens->walk('delete');
 
