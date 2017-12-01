@@ -48,6 +48,7 @@ class Groove_Hubshoply_Model_Config
     extends Mage_Core_Model_Abstract
 {
 
+    const DEFAULT_MAX_CART_AGE_DAYS         = 60;
     const LOG_ENTRY_LIFETIME                = 604800;
     const OAUTH_CONSUMER                    = 'HubShop.ly';
     const REMOTE_AUTH_URL                   = 'https://magento.hubshop.ly/auth/magento';
@@ -403,6 +404,16 @@ class Groove_Hubshoply_Model_Config
                 array_filter($customUrl)
             )
         );
+    }
+
+    /**
+     * Get the cart max age in days setting.
+     * 
+     * @return integer
+     */
+    public function getMaxCartAgeDays()
+    {
+        return $this->getData('max_cart_age_days') ?: self::DEFAULT_MAX_CART_AGE_DAYS;
     }
 
     /**
