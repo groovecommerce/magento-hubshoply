@@ -55,18 +55,13 @@ class Groove_Hubshoply_Helper_Cron
     {
         //get all tokens with an additional column
         // telling how many days they have until they expire
-        $tokens = Mage::getModel('groove_hubshoply/token')
-                      ->getCollection()
-                      ->addExpressionFieldToSelect(
-                          'time_diff_token_expirey',
-                          'TIMESTAMPDIFF(MINUTE,NOW(),{{exp}})',
-                          array('exp' => 'expires')
-                      );
-        //select those who are past expiration
-        $tokens->getSelect()->having('time_diff_token_expirey <= 0');
-        //delete them
-        
-        $total = $tokens->getSize();
+        $tokens = Mage::getResourceModel('groove_hubshoply/token_collection');
+
+        $tokens->getSelect()
+            ->columns(array('time_diff_token_expirey' => new Zend_Db_Expr('TIMESTAMPDIFF(MINUTE, NOW(), expires)')))
+            ->having('time_diff_token_expirey <= 0');
+
+        $total = count($tokens);
 
         $tokens->walk('delete');
 
@@ -102,82 +97,94 @@ class Groove_Hubshoply_Helper_Cron
     }
 
     /**
-     * Anything equal to or greater than $minutes old without checkout will be flagged abandoned.
+     * Anything equal to or greater than $abandonAge old without checkout will be flagged abandoned.
      * 
-     * @param int $minutes The age an order-less cart/quote is considered abandoned
+     * @param int $abandonAge The age an order-less cart/quote is considered abandoned
      *
      * @return integer
      */
-    public function findAbandonCarts($minutes)
+    public function findAbandonCarts($abandonAge = null)
     {
-        //get read connection and update index
-        $adapter = Mage::getSingleton('core/resource')->getConnection('sales_read');
-        //get SQL fragment for finding carts that haven't been updated in the last `$minutes` minutes
-        $from = $adapter->getDateSubSql(
-            $adapter->quote(now()),
-            $minutes,
-            Varien_Db_Adapter_Interface::INTERVAL_MINUTE
-        );
-        //get quotes collection, never converted. Updated before `$minutes` minutes ago
-        $abandoned = Mage::getResourceModel('sales/quote_collection')
-                      ->addFieldToFilter('converted_at', array( //this is supposed to be the determining factor
-                          array('eq'=>$adapter->getSuggestedZeroDate()),
-                          array('null'=>null),
-                      ))
-                      ->addFieldToFilter('customer_email', array('notnull' => ''))
-                      ->addFieldToFilter('is_active', 1) //this is the determining factor
-                      ->addFieldToFilter('updated_at', array('to' => $from));
-        //get abandoned ID's
-        $abandonedIds = $abandoned->getColumnValues(Mage::getModel('sales/quote')->getIdFieldName());
-        //All "abandoned carts" that have since been ordered can be removed from the abandoned cart index
-        $converted = Mage::getModel('groove_hubshoply/abandonedcart')->getCollection()
-                        ->addFieldToFilter('quote_id',array('nin'=>$abandonedIds))->walk('delete');
+        $userConfig = Mage::getSingleton('groove_hubshoply/config');
 
-        $total = count($abandonedIds);
+        if (!$abandonAge || $userConfig->getMinutesUntilAbandoned()) {
+            $abandonAge = (int) $userConfig->getMinutesUntilAbandoned();
+        }
 
-        //Add or update Abandoned cart index
-        $abandoned->walk(array($this,'trackAbandonCart'));
+        $adapter    = Mage::getSingleton('core/resource')->getConnection('sales_read');
+        $upperBound = $adapter->getDateSubSql($adapter->quote(now()), $abandonAge, Varien_Db_Adapter_Interface::INTERVAL_MINUTE);
+        $lowerBound = $adapter->getDateSubSql($adapter->quote(now()), $userConfig->getMaxCartAgeDays(), Varien_Db_Adapter_Interface::INTERVAL_DAY);
+        $collection = Mage::getResourceModel('sales/quote_collection')
+            ->addFieldToFilter(
+                'converted_at',
+                array(
+                    array('eq' => $adapter->getSuggestedZeroDate()),
+                    array('null' => null),
+                )
+            )
+            ->addFieldToFilter(
+                'updated_at',
+                array(
+                    'from'  => $lowerBound,
+                    'to'    => $upperBound
+                )
+            )
+            ->addFieldToFilter('customer_email', array('notnull' => ''))
+            ->addFieldToFilter('is_active', 1);
 
-        return $total;
+        $select = $collection->getSelect()
+            ->reset(Zend_Db_Select::COLUMNS)
+            ->columns(array('id' => 'entity_id', 'store_id', 'created_at', 'updated_at'));
+
+        $statement  = $adapter->query($select);
+        $object     = new Varien_Object();
+        $quoteIds   = array();
+
+        while ( ($row = $statement->fetch()) ) {
+            call_user_func(array($this, 'trackAbandonCart'), $object->setData($row));
+
+            $quoteIds[] = $row['id'];
+        }
+
+        // @todo consider process deferment or other refactor
+        Mage::getResourceModel('groove_hubshoply/abandonedcart_collection')
+            ->addFieldToFilter('quote_id', array('nin' => $quoteIds))
+            ->walk('delete');
+
+        return count($quoteIds);
     }
 
     /**
      * Takes an unconverted quote from Magento, and stores it in an Abandoned Cart index
      * 
-     * @param Mage_Sales_Model_Quote $quote
+     * @param Varien_Object $quote
      *
      * @return void
      */
-    public function trackAbandonCart(Mage_Sales_Model_Quote $quote)
+    public function trackAbandonCart(Varien_Object $quote)
     {
         if ( !Mage::getSingleton('groove_hubshoply/config')->isEnabled($quote->getStoreId()) ) {
             return;
         }
 
-        //get abandoned cart for quote, or a new one if it doesn't exist
         $cart = Mage::getModel('groove_hubshoply/abandonedcart')
-            ->loadByQuoteStore($quote->getId(),$quote->getStoreId());
-        //if it doesn't exist, set the creation stamp, quote, and store id.
-        if(!$cart->getId())
-        {
-            $cart
-                ->setCreatedAt($quote->getCreatedAt())
+            ->loadByQuoteStore($quote->getId(), $quote->getStoreId());
+
+        if (!$cart->getId()) {
+            $cart->setCreatedAt($quote->getCreatedAt())
                 ->setQuoteId($quote->getId())
                 ->setStoreId($quote->getStoreId());
         }
-        //existing carts only need to know if there is an updated timestamp
-        if($cart->getUpdatedAt() != $quote->getUpdatedAt())
-        {
-            //if the timestamp is updated, it becomes a new item to queue
-            $cart
-                ->setUpdatedAt($quote->getUpdatedAt())
+
+        if ($cart->getUpdatedAt() != $quote->getUpdatedAt()) {
+            $cart->setUpdatedAt($quote->getUpdatedAt())
                 ->setEnqueued(false);
         }
-        try{
+
+        try {
             $cart->save();
-        }
-        catch(Exception $x){
-            Mage::logException($x);
+        } catch (Exception $error) {
+            Mage::logException($error);
         }
     }
     
