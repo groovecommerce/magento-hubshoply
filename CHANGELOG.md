@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [2.2.0] - 2017-08-11
+## [2.2.0] - 2017-12-01
 
 ### Changed
 - **(minor)** Implement cart abandonment range to decrease collection size
