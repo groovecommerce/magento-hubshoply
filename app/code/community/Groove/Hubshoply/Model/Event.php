@@ -68,16 +68,19 @@ class Groove_Hubshoply_Model_Event
      * Determine whether the event observed is actionable.
      * 
      * @param Varien_Event_Observer $observer The event details.
+     * @param integer               $storeId  Optional store ID for context.
      * 
      * @return boolean
      */
-    private function _canObserve(Varien_Event_Observer $observer)
+    private function _canObserve(Varien_Event_Observer $observer, $storeId = null)
     {
         if (empty($this->_activeStores)) {
             return false;
         }
 
-        $storeId = Mage::app()->getStore()->getId();
+        if (!is_numeric($storeId)) {
+            $storeId = Mage::app()->getStore()->getId();
+        }
 
         return empty($this->_activeStores[$storeId]) ? false : true;
     }
@@ -157,11 +160,11 @@ class Groove_Hubshoply_Model_Event
      */
     public function createReview(Varien_Event_Observer $observer)
     {
-        if (!$this->_canObserve($observer)) {
+        $review = $observer->getEvent()->getDataObject();
+
+        if (!$this->_canObserve($observer, current($review->getStores()))) {
             return;
         }
-
-        $review = $observer->getEvent()->getDataObject();
 
         $this->_addToQueue(
             'review',
@@ -233,12 +236,12 @@ class Groove_Hubshoply_Model_Event
      */
     public function saveOrderBefore(Varien_Event_Observer $observer)
     {
-        if (!$this->_canObserve($observer)) {
-            return;
-        }
-
         /* @var Mage_Sales_Model_Order $order */
         $order = $observer->getEvent()->getDataObject();
+
+        if (!$this->_canObserve($observer, $order->getStoreId())) {
+            return;
+        }
 
         if ($order->isObjectNew()) {
             $order->setObjectNewTmp(true);
@@ -254,12 +257,12 @@ class Groove_Hubshoply_Model_Event
      */
     public function saveOrderAfter(Varien_Event_Observer $observer)
     {
-        if (!$this->_canObserve($observer)) {
-            return;
-        }
-
         /* @var Mage_Sales_Model_Order $order */
         $order = $observer->getEvent()->getDataObject();
+
+        if (!$this->_canObserve($observer, $order->getStoreId())) {
+            return;
+        }
 
         $payload = array(
             'order_id'              => $order->getId(),
@@ -294,12 +297,13 @@ class Groove_Hubshoply_Model_Event
      */
     public function saveShipment(Varien_Event_Observer $observer)
     {
-        if (!$this->_canObserve($observer)) {
+        /* @var Mage_Sales_Model_Order_Shipment $shipment */
+        $shipment   = $observer->getEvent()->getDataObject();
+
+        if (!$this->_canObserve($observer, $shipment->getStoreId())) {
             return;
         }
 
-        /* @var Mage_Sales_Model_Order_Shipment $shipment */
-        $shipment   = $observer->getEvent()->getDataObject();
         $email      = $shipment->getOrder()->getCustomerEmail();
         $tracking   = $shipment->getAllTracks();
         $tracks     = array();
@@ -364,7 +368,7 @@ class Groove_Hubshoply_Model_Event
         }
     }
 
-    /**     
+    /**
      * Enqueues event to database.
      * 
      * @param string $entity
@@ -374,12 +378,12 @@ class Groove_Hubshoply_Model_Event
      * 
      * @return bool If successfully added to queue
      */
-    private function _addToQueue($entity,$event, $data,$store_id = null)
+    private function _addToQueue($entity, $event, $data, $store_id = null)
     {
         //get store ID, or use provided
-        $store_id = is_null($store_id)?Mage::app()->getStore()->getId():$store_id;
+        $store_id = is_null($store_id) ? Mage::app()->getStore()->getId() : $store_id;
         //save item to queue, or log error
-        try{
+        try {
             $queueitem = Mage::getModel('groove_hubshoply/queueitem')
                     ->setEventType($event)
                     ->setEventEntity($entity)
@@ -387,15 +391,17 @@ class Groove_Hubshoply_Model_Event
                     ->setPayload(json_encode($data));
             $queueitem->save();
             return true;
-        }
-        catch(Exception $x)
-        {
+        } catch (Exception $error) {
             Mage::log(
-                        sprintf('Attempted to add to queue: Entity: [%s] Event: [%s] Store [%s], Payload [%s]'
-                                    ,$entity,$event,$store_id,$data)
-                        .PHP_EOL.$x->getMessage()
-                        .PHP_EOL.$x->getTraceAsString()
-                ,null,$this::EVENT_CONTROL_LOG
+                sprintf(
+                    'Attempted to add to queue: Entity: [%s] Event: [%s] Store [%s], Payload [%s]',
+                    $entity,
+                    $event,
+                    $store_id,
+                    $data
+                ) . PHP_EOL . $error->getMessage() . PHP_EOL . $error->getTraceAsString(),
+                null,
+                $this::EVENT_CONTROL_LOG
             );
             return false;
         }
