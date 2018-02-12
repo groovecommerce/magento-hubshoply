@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2018-02-12
+
+### Changed
+- **(revision)** Bug fix on order query store scope
+
 ## [2.2.0] - 2017-12-01
 
 ### Changed
