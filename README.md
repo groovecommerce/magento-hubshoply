@@ -3,8 +3,19 @@ HubShop.ly for Magento
 
 The official HubShop.ly connector for Magento 1.x stores.
 
-License
--------
+## Installation Guide
+
+For our installation guide please visit: http://www.hubshop.ly/resources
+
+## Support
+
+For support please visit: http://support.hubshop.ly/magento or support@hubshop.ly
+
+## Changelog
+
+See `CHANGELOG.md` for important release history notes.
+
+## License
 
 The MIT License (MIT)
 Copyright (c) 2017 Groove Commerce, LLC.
