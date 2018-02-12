@@ -518,6 +518,7 @@ class Groove_Hubshoply_QueueController
             $adapter    = $resource->getReadConnection();
             $select     = $adapter->select()
                 ->from($resource->getMainTable(), $fields)
+                ->where('store_id = ?', Mage::app()->getStore()->getStoreId())
                 ->limit($count, ( $offset - 1 ) * $count );
 
             $records    = $adapter->fetchAll($select);
