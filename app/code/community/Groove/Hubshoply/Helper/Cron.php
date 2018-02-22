@@ -78,18 +78,13 @@ class Groove_Hubshoply_Helper_Cron
     public function pruneStaleQueueItems($days)
     {
         //get all queue items with an additional column for age
-        $queueitems = Mage::getModel('groove_hubshoply/queueitem')
-                          ->getCollection()
-                          ->addExpressionFieldToSelect(
-                              'date_diff_queue_age',
-                              'DATEDIFF(NOW(),{{cat}})',
-                              array('cat' => 'created_at')
-                          );
-        //filter to get all items older than `$days` days
-        $queueitems->getSelect()->having('date_diff_queue_age >= '.$days);
-        //delete them
-        
-        $total = $queueitems->getSize();
+        $queueitems = Mage::getResourceModel('groove_hubshoply/queueitem_collection');
+
+        $queueitems->getSelect()
+            ->columns(array('date_diff_queue_age' => new Zend_Db_Expr('DATEDIFF(NOW(),created_at)')))
+            ->having('date_diff_queue_age >= ?', $days);
+
+        $total = count($queueitems);
 
         $queueitems->walk('delete');
 
